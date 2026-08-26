@@ -1,3 +1,5 @@
+export const revalidate = 0;
+
 import { CartSummary } from "@/components/cart-summary";
 import { StoreCard } from "@/components/store-card";
 import { getStores } from "@/lib/store-api";

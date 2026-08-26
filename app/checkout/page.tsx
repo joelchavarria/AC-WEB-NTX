@@ -1,9 +1,15 @@
+import Link from "next/link";
 import { CheckoutClient } from "@/components/checkout-client";
 
 export default function CheckoutPage() {
   return (
     <main className="page">
       <div className="shell stack">
+        <div className="row">
+          <Link href="/" className="button secondary">
+            Volver al inicio
+          </Link>
+        </div>
         <section className="hero split">
           <div className="stack">
             <span className="eyebrow">Checkout</span>

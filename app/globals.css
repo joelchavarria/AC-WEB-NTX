@@ -339,6 +339,11 @@ h2 {
   gap: 20px;
 }
 
+.action-row {
+  justify-content: flex-start;
+  margin-top: 10px;
+}
+
 .list {
   display: grid;
   gap: 14px;
@@ -350,6 +355,52 @@ h2 {
   gap: 16px;
   padding-bottom: 12px;
   border-bottom: 1px solid var(--line);
+}
+
+.loading-panel {
+  pointer-events: none;
+}
+
+.loading-block,
+.loading-line {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(90deg, #edf2fb 0%, #ffffff 50%, #edf2fb 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+
+.loading-block {
+  border-radius: 22px;
+  min-height: 72px;
+}
+
+.loading-line {
+  height: 16px;
+  border-radius: 999px;
+}
+
+.loading-line.short {
+  width: 24%;
+}
+
+.loading-line.medium {
+  width: 68%;
+}
+
+.loading-line.large {
+  width: 88%;
+  height: 54px;
+  border-radius: 18px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 @media (max-width: 900px) {

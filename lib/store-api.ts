@@ -1,47 +1,38 @@
 import { supabase, type Store } from "@/lib/supabase";
+const fallbackImage =
+  "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=600&h=600&fit=crop&auto=format";
 
-async function attachProductImages<T extends { id: string }>(products: T[]) {
-  if (products.length === 0) {
-    return products;
-  }
-
-  const productIds = products.map((product) => product.id);
-  const { data: images, error } = await supabase
-    .from("product_images")
-    .select("product_id, image_url, thumbnail_url, created_at")
-    .in("product_id", productIds)
-    .order("created_at", { ascending: true });
-
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  const imageByProductId = new Map<string, { image_url: string | null; thumbnail_url: string | null }>();
-
-  for (const image of images ?? []) {
-    if (!imageByProductId.has(image.product_id)) {
-      imageByProductId.set(image.product_id, {
-        image_url: image.image_url,
-        thumbnail_url: image.thumbnail_url,
-      });
-    }
-  }
-
-  return products.map((product) => {
-    const image = imageByProductId.get(product.id);
-
-    return {
-      ...product,
-      image: image?.image_url ?? undefined,
-      thumbnail: image?.thumbnail_url ?? undefined,
-    };
-  });
+function mapProductsWithImages(
+  products: Array<{
+    id: string;
+    store_id: string;
+    name: string;
+    description: string | null;
+    price: number | string;
+    stock: number;
+    fulfillment_mode: string;
+    is_active: boolean;
+    product_images?: Array<{ image_url: string | null }> | null;
+  }>,
+) {
+  return products.map((product) => ({
+    id: product.id,
+    store_id: product.store_id,
+    name: product.name,
+    description: product.description,
+    price: Number(product.price),
+    stock: product.stock,
+    fulfillment_mode: product.fulfillment_mode,
+    is_active: product.is_active,
+    image: product.product_images?.[0]?.image_url ?? fallbackImage,
+  }));
 }
 
 export async function getStores() {
   const { data: stores, error } = await supabase
     .from("stores")
-    .select("id, owner_profile_id, name, slug, store_json")
+    .select("id, owner_profile_id, name, slug, category, description, whatsapp_phone, address, is_active, store_json")
+    .eq("is_active", true)
     .order("name", { ascending: true });
 
   if (error) {
@@ -56,14 +47,14 @@ export async function getStores() {
 
   const { data: products, error: productsError } = await supabase
     .from("products")
-    .select("id, store_id, name, description, price, stock, fulfillment_mode, is_active")
+    .select("id, store_id, name, description, price, stock, fulfillment_mode, is_active, product_images(image_url)")
     .eq("is_active", true);
 
   if (productsError) {
     throw new Error(productsError.message);
   }
 
-  const productsWithImages = await attachProductImages(products ?? []);
+  const productsWithImages = mapProductsWithImages(products ?? []);
   const productsByStore = new Map<string, NonNullable<Store["products"]>>();
 
   for (const product of productsWithImages) {
@@ -81,8 +72,9 @@ export async function getStores() {
 export async function getStoreBySlug(slug: string) {
   const { data, error } = await supabase
     .from("stores")
-    .select("id, owner_profile_id, name, slug, store_json")
+    .select("id, owner_profile_id, name, slug, category, description, whatsapp_phone, address, is_active, store_json")
     .eq("slug", slug)
+    .eq("is_active", true)
     .maybeSingle();
 
   if (error) {
@@ -97,7 +89,7 @@ export async function getStoreBySlug(slug: string) {
 
   const { data: products, error: productsError } = await supabase
     .from("products")
-    .select("id, store_id, name, description, price, stock, fulfillment_mode, is_active")
+    .select("id, store_id, name, description, price, stock, fulfillment_mode, is_active, product_images(image_url)")
     .eq("store_id", store.id)
     .eq("is_active", true)
     .order("created_at", { ascending: false });
@@ -106,7 +98,7 @@ export async function getStoreBySlug(slug: string) {
     throw new Error(productsError.message);
   }
 
-  const productsWithImages = await attachProductImages(products ?? []);
+  const productsWithImages = mapProductsWithImages(products ?? []);
 
   return {
     ...store,

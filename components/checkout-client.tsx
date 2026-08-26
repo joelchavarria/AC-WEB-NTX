@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
-import { readCart, subscribeToCart, type CartItem } from "@/lib/cart";
+import { clearCart, readCart, subscribeToCart, type CartItem } from "@/lib/cart";
 import { supabase } from "@/lib/supabase";
 import { LoginGate } from "@/components/login-gate";
 
@@ -42,6 +43,14 @@ export function CheckoutClient() {
         <div className="line">
           <strong>Total</strong>
           <strong className="price">${total}</strong>
+        </div>
+        <div className="row action-row">
+          <button className="button secondary" onClick={() => clearCart()}>
+            Limpiar carrito
+          </button>
+          <Link href="/" className="button secondary">
+            Volver al inicio
+          </Link>
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 # CA-WEB
 
-Base minima de catalogo web publico con Supabase.
+Marketplace web con Next.js, Supabase y despliegue listo para Vercel.
 
 ## Flujo
 
@@ -17,6 +17,24 @@ Crear `.env.local` con:
 NEXT_PUBLIC_SUPABASE_URL="https://cgfknfvshndoktxxdwxz.supabase.co"
 NEXT_PUBLIC_SUPABASE_ANON_KEY="tu-anon-key"
 ```
+
+## Deploy en Vercel
+
+1. Importa el repo `joelchavarria/AC-WEB-NTX` en Vercel.
+2. Framework detectado: `Next.js`.
+3. Define estas variables en Vercel:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+4. Deploy.
+
+El proyecto incluye:
+
+- `vercel.json`
+- `@vercel/analytics`
+- `@vercel/speed-insights`
+- `app/loading.tsx` para mejor carga inicial
+- `next/font` con `Inter`
+- metadata base para produccion
 
 ## Estructura esperada en Supabase
 

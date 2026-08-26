@@ -20,6 +20,11 @@ export type Store = {
   owner_profile_id: string;
   name: string;
   slug: string;
+  category?: string | null;
+  description?: string | null;
+  whatsapp_phone?: string | null;
+  address?: string | null;
+  is_active?: boolean;
   store_json: {
     description?: string;
     accent?: string;
@@ -30,13 +35,13 @@ export type Store = {
 
 export type Product = {
   id: string;
-  store_id?: string;
+  store_id: string;
   name: string;
   price: number;
-  description?: string;
+  description?: string | null;
   image?: string;
   thumbnail?: string;
-  stock?: number;
-  fulfillment_mode?: string;
-  is_active?: boolean;
+  stock: number;
+  fulfillment_mode: string;
+  is_active: boolean;
 };

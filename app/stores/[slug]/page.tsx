@@ -1,3 +1,5 @@
+export const revalidate = 0;
+
 import Image from "next/image";
 import Link from "next/link";
 import { AddToCartButton } from "@/components/add-to-cart-button";
@@ -32,10 +34,11 @@ export default async function StorePage({ params }: { params: { slug: string } }
           <div className="stack">
             <span className="eyebrow">Storefront</span>
             <h1>{store.name}</h1>
-            <p className="muted">{store.store_json?.description ?? "Catalogo disponible para navegar sin iniciar sesion."}</p>
+            <p className="muted">{store.description ?? store.store_json?.description ?? "Catalogo disponible para navegar sin iniciar sesion."}</p>
             <div className="row">
               <span className="pill">{store.slug}</span>
               <span className="pill">Checkout con login</span>
+              {store.category ? <span className="pill">{store.category}</span> : null}
             </div>
           </div>
           <div className="hero-panel stack">
@@ -50,6 +53,9 @@ export default async function StorePage({ params }: { params: { slug: string } }
             <span className="eyebrow">Catalogo</span>
             <h2>Productos destacados</h2>
           </div>
+          <Link href="/" className="button secondary">
+            Volver al inicio
+          </Link>
         </div>
 
         <section className="grid">

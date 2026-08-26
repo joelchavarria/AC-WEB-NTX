@@ -37,6 +37,10 @@ export function addToCart(item: CartItem) {
   return cart;
 }
 
+export function clearCart() {
+  writeCart([]);
+}
+
 export function subscribeToCart(callback: () => void) {
   if (typeof window === "undefined") {
     return () => undefined;
