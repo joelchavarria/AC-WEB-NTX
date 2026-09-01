@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { clearCart, readCart, subscribeToCart, type CartItem } from "@/lib/cart";
 import { supabase } from "@/lib/supabase";
-import { LoginGate } from "@/components/login-gate";
+import { LoginGate } from "@/components/page/auth/login-gate";
 
 export function CheckoutClient() {
   const [items, setItems] = useState<CartItem[]>([]);

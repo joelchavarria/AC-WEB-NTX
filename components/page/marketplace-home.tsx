@@ -4,38 +4,73 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ArrowRight, Bag, CaretRight, ForkKnife, Heart, House, MagnifyingGlass, Package, Palette, ShoppingCart, Sneaker, Sparkle, Storefront, TShirt, UserCircle } from "@phosphor-icons/react";
-import { CartSummary } from "@/components/cart-summary";
+import { CartSummary } from "@/components/cart/cart-summary";
 import type { Store } from "@/lib/supabase";
 
-const categories = [
-  { label: "Ropa y moda", icon: TShirt }, { label: "Calzado", icon: Sneaker },
-  { label: "Belleza y cuidado", icon: Sparkle }, { label: "Hogar y decoración", icon: House },
-  { label: "Comida y bebidas", icon: ForkKnife }, { label: "Arte y diseño", icon: Palette },
-];
+const categoryIcons: Record<string, typeof TShirt> = {
+  "ropa y moda": TShirt,
+  "ropa y accesorios": TShirt,
+  calzado: Sneaker,
+  zapateria: Sneaker,
+  zapataeria: Sneaker,
+  joyerias: Sparkle,
+  joyeria: Sparkle,
+  "belleza y cuidado": Sparkle,
+  "hogar y decoracion": House,
+  "comida y bebidas": ForkKnife,
+  "arte y diseno": Palette,
+};
+
+function normalizeCategory(value: string) {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
+function titleCase(value: string) {
+  return value.replace(/\b\w/g, (char) => char.toUpperCase());
+}
 
 export function MarketplaceHome({ stores, error }: { stores: Store[]; error: string }) {
   const [query, setQuery] = useState("");
   const [favorite, setFavorite] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState("");
   const visibleStores = stores;
+  const categories = useMemo(() => {
+    const values = [...new Set(visibleStores.map((store) => store.category?.trim()).filter(Boolean))] as string[];
+    return values.map((label) => {
+      const normalized = normalizeCategory(label);
+      return {
+        label,
+        normalized,
+        icon: categoryIcons[normalized] ?? Storefront,
+      };
+    });
+  }, [visibleStores]);
   const filteredStores = useMemo(() => {
     const search = query.trim().toLowerCase();
-    if (!search) return visibleStores;
-    return visibleStores.filter((store) => [store.name, store.category, store.description, store.store_json?.description].some((value) => value?.toLowerCase().includes(search)));
-  }, [query, visibleStores]);
+    return visibleStores.filter((store) => {
+      const matchesCategory = selectedCategory ? normalizeCategory(store.category ?? "") === selectedCategory : true;
+      const matchesSearch = search ? [store.name, store.category, store.description, store.store_json?.description].some((value) => value?.toLowerCase().includes(search)) : true;
+      return matchesCategory && matchesSearch;
+    });
+  }, [query, selectedCategory, visibleStores]);
 
   return <main className="marketplace-page">
     <header className="market-header">
       <Link className="market-brand" href="/" aria-label="ONDIE, inicio"><Image src="/ondie-logo.svg" alt="ONDIE" width={176} height={58} priority /></Link>
       <label className="market-search"><MagnifyingGlass aria-hidden="true" /><input aria-label="Buscar productos o tiendas" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar productos o tiendas..." /></label>
       <nav className="market-nav" aria-label="Navegación principal"><a href="#stores">Tiendas</a></nav>
-      <div className="header-actions"><CartSummary /><Link href="/checkout" className="profile-button" aria-label="Mi cuenta"><UserCircle weight="bold" /></Link></div>
+      <div className="header-actions"><CartSummary /><Link href="/account" className="profile-button" aria-label="Mi cuenta"><UserCircle weight="bold" /></Link></div>
     </header>
 
     <div className="market-layout">
       <aside className="category-sidebar" id="categories">
         <p className="sidebar-title">Categorías</p>
-        <div className="category-list">{categories.map(({ label, icon: Icon }) => <button key={label} type="button" onClick={() => setQuery(label.split(" ")[0])}><Icon weight="duotone" /><span>{label}</span><CaretRight /></button>)}</div>
-        <button className="all-categories" type="button" onClick={() => setQuery("")}>Ver todas <ArrowRight /></button>
+        <div className="category-list">{categories.map(({ label, normalized, icon: Icon }) => <button key={label} type="button" className={selectedCategory === normalized ? "active" : ""} onClick={() => setSelectedCategory(normalized)}><Icon weight="duotone" /><span>{titleCase(label)}</span><CaretRight /></button>)}</div>
+        <button className="all-categories" type="button" onClick={() => { setQuery(""); setSelectedCategory(""); }}>Ver todas <ArrowRight /></button>
         <div className="seller-card"><span><Bag weight="duotone" /></span><strong>Únete al colectivo</strong><p>Haz visible tu tienda y llega a más personas.</p><a href="mailto:hola@ondie.com">Quiero vender</a></div>
       </aside>
 

@@ -611,6 +611,32 @@ h2 {
 .store-cover-actions button, .store-cover-actions a { height: 43px; border-radius: 12px; padding: 0 15px; display: flex; gap: 8px; align-items: center; border: 1px solid rgba(255,255,255,.45); background: rgba(255,255,255,.94); color: #16223a; font-weight: 750; font-size: .76rem; }
 .store-cover-actions a { background: #142fe3; border-color: #142fe3; color: white; }
 .store-cover-actions svg { width: 18px; height: 18px; }
+
+.account-page { min-height: 100vh; background: linear-gradient(180deg, #f6f8ff 0%, #ffffff 100%); }
+.account-shell { width: min(100%, 1040px); margin: 0 auto; padding: 38px 22px 64px; }
+.account-back { display: inline-flex; align-items: center; gap: 8px; color: #142fe3; font-weight: 700; font-size: .86rem; }
+.account-auth-card { margin-top: 20px; display: grid; gap: 20px; padding: 28px; border: 1px solid #e1e6ee; border-radius: 24px; background: white; box-shadow: 0 16px 42px rgba(7,23,42,.06); }
+.account-auth-copy span { color: #142fe3; font-size: .7rem; font-weight: 800; letter-spacing: .08em; }
+.account-auth-copy h1 { margin: 8px 0 10px; font-size: clamp(2rem, 5vw, 3rem); letter-spacing: -.05em; }
+.account-auth-copy p { max-width: 520px; color: #677489; line-height: 1.6; }
+.account-session-card { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: 16px; background: #eef8f0; color: #155724; }
+.account-session-card svg { width: 34px; height: 34px; color: #1b8a3f; }
+.account-session-card strong { display: block; font-size: .84rem; }
+.account-session-card p { font-size: .72rem; }
+.account-auth-tabs { display: inline-grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 6px; border-radius: 14px; background: #f4f6fb; width: min(100%, 360px); }
+.account-auth-tabs button { min-height: 46px; border: 0; border-radius: 10px; background: transparent; color: #657288; font-weight: 800; cursor: pointer; }
+.account-auth-tabs button.active { background: white; color: #142fe3; box-shadow: 0 8px 18px rgba(18,63,230,.08); }
+.account-auth-form { display: grid; gap: 14px; max-width: 460px; }
+.account-auth-form label { display: grid; gap: 7px; }
+.account-auth-form label > span { font-size: .74rem; font-weight: 700; color: #15233b; }
+.account-auth-form label > div { height: 50px; display: flex; align-items: center; gap: 10px; padding: 0 14px; border: 1px solid #dce2ec; border-radius: 12px; background: #fcfdff; }
+.account-auth-form label > div svg { width: 20px; height: 20px; color: #142fe3; }
+.account-auth-form input { width: 100%; height: 100%; }
+.account-auth-form input:focus { outline: none; }
+.account-auth-form label > div:focus-within { border-color: #8ea0ff; box-shadow: 0 0 0 3px rgba(20,47,227,.08); }
+.account-auth-submit { min-height: 50px; border: 0; border-radius: 12px; background: #142fe3; color: white; display: inline-flex; justify-content: center; align-items: center; gap: 8px; font-weight: 800; cursor: pointer; }
+.account-auth-submit:disabled { opacity: .55; cursor: not-allowed; }
+.account-auth-note { max-width: 520px; color: #667387; font-size: .72rem; line-height: 1.55; }
 .store-tabs { height: 58px; display: flex; align-items: flex-end; gap: 34px; border-bottom: 1px solid #dde3ee; padding-left: 280px; }
 .store-tabs a { height: 58px; display: flex; align-items: center; padding: 0 10px; font-size: .78rem; font-weight: 750; color: #667387; }
 .store-tabs .active { color: #142fe3; border-bottom: 3px solid #142fe3; }
@@ -687,6 +713,10 @@ h2 {
   .store-cover-actions { left: 22px; right: 22px; bottom: 24px; }
   .store-cover-actions button { display: none; }
   .store-cover-actions a { width: 100%; justify-content: center; }
+  .account-shell { padding: 22px 16px 48px; }
+  .account-auth-card { padding: 22px 18px; border-radius: 20px; }
+  .account-auth-tabs { width: 100%; }
+  .account-auth-form { max-width: none; }
   .store-tabs { padding-left: 0; justify-content: center; }
   .store-catalog-layout { grid-template-columns: 1fr; }
   .catalog-sidebar { display: none; }
@@ -907,7 +937,6 @@ h2 {
 .ready-order span { display: grid; gap: 2px; }
 .ready-order strong { font-size: .65rem; }
 .ready-order small { font-size: .57rem; }
-.order-save-error { margin: 0 0 10px; padding: 11px 12px; border-radius: 10px; background: #fff1f1; color: #b42318; font-size: .63rem; line-height: 1.45; }
 .privacy-order { margin: 12px 0 0 !important; display: flex; justify-content: center; gap: 6px; font-size: .56rem !important; }
 .privacy-order svg { width: 13px; height: 13px; }
 .order-empty { min-height: 360px; display: grid; place-items: center; align-content: center; gap: 10px; border: 1px dashed #cbd3e4; border-radius: 18px; background: white; }
@@ -946,4 +975,24 @@ h2 {
   .payment-account-actions { justify-items: start; }
   .order-benefits { grid-template-columns: 1fr; gap: 18px; padding: 22px; }
   .order-benefits > div { justify-content: start; }
+}
+
+.notice-stack { position: fixed; top: 18px; right: 18px; z-index: 90; display: grid; gap: 10px; width: min(100% - 24px, 360px); }
+.notice-card { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: start; padding: 14px; border-radius: 16px; border: 1px solid #e4e8f0; background: rgba(255,255,255,.96); box-shadow: 0 18px 44px rgba(7,23,42,.12); backdrop-filter: blur(14px); }
+.notice-card.success { border-color: #d9f2df; }
+.notice-card.error { border-color: #ffd9d9; }
+.notice-card.info { border-color: #dfe6ff; }
+.notice-icon { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 12px; background: #f4f7ff; }
+.notice-card.success .notice-icon { color: #14803d; background: #eef8f0; }
+.notice-card.error .notice-icon { color: #b42318; background: #fff1f1; }
+.notice-card.info .notice-icon { color: #142fe3; background: #eef2ff; }
+.notice-icon svg { width: 20px; height: 20px; }
+.notice-copy { display: grid; gap: 3px; }
+.notice-copy strong { font-size: .82rem; color: #16223a; }
+.notice-copy p { color: #667387; font-size: .7rem; line-height: 1.5; }
+.notice-close { width: 28px; height: 28px; border: 0; border-radius: 999px; background: transparent; color: #90a0b7; display: grid; place-items: center; cursor: pointer; }
+.notice-close svg { width: 14px; height: 14px; }
+
+@media (max-width: 760px) {
+  .notice-stack { top: auto; right: 12px; left: 12px; bottom: 14px; width: auto; }
 }

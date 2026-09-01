@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, LockKey, MagnifyingGlass, Minus, Package, Plus, ShieldCheck, Storefront, Trash, Truck, UserCircle, WhatsappLogo, X } from "@phosphor-icons/react";
-import { CartSummary } from "@/components/cart-summary";
+import { CartSummary } from "@/components/cart/cart-summary";
 import { clearCart, readCart, removeFromCart, subscribeToCart, updateCartQuantity, type CartItem } from "@/lib/cart";
 
 export function CartPageClient() {
@@ -21,7 +21,7 @@ export function CartPageClient() {
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   return <main className="ondie-cart-page">
-    <header className="cart-page-header"><Link href="/"><Image src="/ondie-logo.svg" alt="ONDIE" width={176} height={58} priority /></Link><label><MagnifyingGlass /><input aria-label="Buscar productos o tiendas" placeholder="Buscar productos o tiendas..." /></label><nav><Link href="/">Tiendas</Link></nav><div><CartSummary /><Link href="/checkout" aria-label="Mi cuenta"><UserCircle /></Link></div></header>
+    <header className="cart-page-header"><Link href="/"><Image src="/ondie-logo.svg" alt="ONDIE" width={176} height={58} priority /></Link><label><MagnifyingGlass /><input aria-label="Buscar productos o tiendas" placeholder="Buscar productos o tiendas..." /></label><nav><Link href="/">Tiendas</Link></nav><div><CartSummary /><Link href="/account" aria-label="Mi cuenta"><UserCircle /></Link></div></header>
     <div className="cart-page-shell">
       <section className="cart-page-intro"><div><span>TU COMPRA</span><h1>Mi carrito <small>{groups.length} {groups.length === 1 ? "tienda" : "tiendas"}</small></h1><p>Revisa los productos que agregaste. Cada pedido se gestiona con la tienda correspondiente.</p></div>{items.length ? <button type="button" onClick={clearCart}><Trash /> Vaciar carrito</button> : null}</section>
       {items.length ? <div className="cart-page-layout">

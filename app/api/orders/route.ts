@@ -40,9 +40,17 @@ type ExistingOrder = {
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+function userError(message: string, status = 400) {
+  return NextResponse.json({ error: message }, { status });
+}
+
+function friendlyServerError() {
+  return userError("No pudimos preparar tu pedido en este momento. Intenta nuevamente en unos minutos.", 500);
+}
+
 export async function POST(request: Request) {
   if (!supabaseUrl || !serviceRoleKey) {
-    return NextResponse.json({ error: "Missing Supabase server credentials." }, { status: 500 });
+    return friendlyServerError();
   }
 
   const body = await request.json() as OrderRequest;
@@ -53,7 +61,7 @@ export async function POST(request: Request) {
   const groups = body.groups ?? [];
 
   if (!name || !phone || !address || !paymentMethod || !groups.length) {
-    return NextResponse.json({ error: "Missing required order data." }, { status: 400 });
+    return userError("Completa tus datos de entrega para continuar.");
   }
 
   const supabase = createClient(supabaseUrl, serviceRoleKey, {
@@ -64,7 +72,7 @@ export async function POST(request: Request) {
 
   for (const group of groups) {
     if (!group.storeId || !group.items?.length) {
-      return NextResponse.json({ error: "Invalid order group." }, { status: 400 });
+      return userError("Tu carrito cambió. Revísalo y vuelve a intentar.");
     }
 
     const subtotal = group.items.reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0);
@@ -81,7 +89,7 @@ export async function POST(request: Request) {
       .limit(5);
 
     if (recentOrdersError) {
-      return NextResponse.json({ error: recentOrdersError.message }, { status: 500 });
+      return friendlyServerError();
     }
 
     const normalizedItems = [...group.items]
@@ -124,7 +132,7 @@ export async function POST(request: Request) {
       .single();
 
     if (orderError || !order) {
-      return NextResponse.json({ error: orderError?.message ?? "Failed to create order." }, { status: 500 });
+      return friendlyServerError();
     }
 
     const itemsPayload = group.items.map((item) => ({
@@ -140,17 +148,21 @@ export async function POST(request: Request) {
 
     if (itemsError) {
       await supabase.from("orders").delete().eq("id", order.id);
-      return NextResponse.json({ error: itemsError.message }, { status: 500 });
+      return friendlyServerError();
     }
 
-    await supabase.from("order_status_history").insert({
+    const { error: historyError } = await supabase.from("order_status_history").insert({
       order_id: order.id,
       status: "nuevo",
       notes: "Pedido creado desde checkout web.",
     });
 
+    if (historyError) {
+      return friendlyServerError();
+    }
+
     createdOrders.push({ id: order.id, storeId: group.storeId });
   }
 
-  return NextResponse.json({ orders: createdOrders });
+  return NextResponse.json({ orders: createdOrders, message: "Tu pedido ya está listo para enviarse por WhatsApp." });
 }

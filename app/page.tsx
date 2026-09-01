@@ -1,6 +1,6 @@
 export const revalidate = 0;
 
-import { MarketplaceHome } from "@/components/marketplace-home";
+import { MarketplaceHome } from "@/components/page/marketplace-home";
 import { getStores } from "@/lib/store-api";
 import type { Store } from "@/lib/supabase";
 

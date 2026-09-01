@@ -1,7 +1,7 @@
 export const revalidate = 0;
 
 import Link from "next/link";
-import { StorefrontClient } from "@/components/storefront-client";
+import { StorefrontClient } from "@/components/stores/storefront-client";
 import { getStoreBySlug } from "@/lib/store-api";
 
 export default async function StorePage({ params }: { params: { slug: string } }) {

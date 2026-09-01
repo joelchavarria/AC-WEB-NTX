@@ -4,8 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { ArrowRight, CheckCircle, Heart, MagnifyingGlass, MapPin, Package, ShareNetwork, ShieldCheck, SlidersHorizontal, SortAscending, Storefront, Truck, UserCircle, WhatsappLogo } from "@phosphor-icons/react";
-import { AddToCartButton } from "@/components/add-to-cart-button";
-import { CartSummary } from "@/components/cart-summary";
+import { AddToCartButton } from "@/components/cart/add-to-cart-button";
+import { CartSummary } from "@/components/cart/cart-summary";
 import type { Store } from "@/lib/supabase";
 import { toWhatsAppNumber } from "@/lib/whatsapp";
 
@@ -31,7 +31,7 @@ export function StorefrontClient({ store }: { store: Store }) {
       <Link href="/" className="storefront-brand"><Image src="/ondie-logo.svg" alt="ONDIE" width={176} height={58} priority /></Link>
       <label className="storefront-search"><MagnifyingGlass /><input aria-label="Buscar en esta tienda" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`Buscar en ${store.name}...`} /></label>
       <nav><Link href="/">Tiendas</Link><a href="#products">Productos</a><a href="#information">Información</a></nav>
-      <div className="storefront-actions"><CartSummary /><Link href="/checkout" aria-label="Mi cuenta"><UserCircle weight="bold" /></Link></div>
+      <div className="storefront-actions"><CartSummary /><Link href="/account" aria-label="Mi cuenta"><UserCircle weight="bold" /></Link></div>
     </header>
     <div className="storefront-shell">
       <div className="store-breadcrumb"><Link href="/">Inicio</Link><span>/</span><Link href="/">Tiendas</Link><span>/</span><strong>{store.name}</strong></div>
@@ -49,7 +49,7 @@ export function StorefrontClient({ store }: { store: Store }) {
         </section>
       </div>
       <section className="store-benefits"><div><Truck weight="duotone" /><span><strong>Envíos coordinados</strong><small>Recibe tu pedido donde estés</small></span></div><div><WhatsappLogo weight="duotone" /><span><strong>Atención rápida</strong><small>Habla directamente con el negocio</small></span></div><div><ShieldCheck weight="duotone" /><span><strong>Compra segura</strong><small>Tu pedido queda protegido</small></span></div></section>
-      <Link href="/checkout" className="mobile-cart-link">Ver carrito <ArrowRight /></Link>
+      <Link href="/cart" className="mobile-cart-link">Ver carrito <ArrowRight /></Link>
     </div>
   </main>;
 }

@@ -1,4 +1,4 @@
-import { OrderGenerationClient } from "@/components/order-generation-client";
+import { OrderGenerationClient } from "@/components/orders/order-generation-client";
 import { getStores } from "@/lib/store-api";
 
 export default async function CheckoutPage() {
