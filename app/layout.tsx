@@ -11,11 +11,11 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://ac-web-ntx.vercel.app"),
-  title: "CA Marketplace",
-  description: "Marketplace multi-tienda con catalogos publicos, carrito y login solo al comprar.",
+  title: "ONDIE | Colectivo de tiendas",
+  description: "Descubre tiendas locales, conoce lo que venden y compra directamente a emprendedores de nuestra comunidad.",
   openGraph: {
-    title: "CA Marketplace",
-    description: "Marketplace multi-tienda con catalogos publicos, carrito y login solo al comprar.",
+    title: "ONDIE | Colectivo de tiendas",
+    description: "Descubre tiendas locales, conoce lo que venden y compra directamente a emprendedores de nuestra comunidad.",
     type: "website",
   },
 };
