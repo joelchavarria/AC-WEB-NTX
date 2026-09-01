@@ -27,7 +27,7 @@ export function MarketplaceHome({ stores, error }: { stores: Store[]; error: str
     <header className="market-header">
       <Link className="market-brand" href="/" aria-label="ONDIE, inicio"><Image src="/ondie-logo.svg" alt="ONDIE" width={176} height={58} priority /></Link>
       <label className="market-search"><MagnifyingGlass aria-hidden="true" /><input aria-label="Buscar productos o tiendas" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar productos o tiendas..." /></label>
-      <nav className="market-nav" aria-label="Navegación principal"><a href="#stores">Colectivo</a><a href="#categories">Categorías</a><a href="#discover">Descubrir</a></nav>
+      <nav className="market-nav" aria-label="Navegación principal"><a href="#stores">Tiendas</a></nav>
       <div className="header-actions"><CartSummary /><Link href="/checkout" className="profile-button" aria-label="Mi cuenta"><UserCircle weight="bold" /></Link></div>
     </header>
 

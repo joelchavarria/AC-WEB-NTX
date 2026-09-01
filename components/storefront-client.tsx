@@ -7,6 +7,7 @@ import { ArrowRight, CheckCircle, Heart, MagnifyingGlass, MapPin, Package, Share
 import { AddToCartButton } from "@/components/add-to-cart-button";
 import { CartSummary } from "@/components/cart-summary";
 import type { Store } from "@/lib/supabase";
+import { toWhatsAppNumber } from "@/lib/whatsapp";
 
 export function StorefrontClient({ store }: { store: Store }) {
   const products = store.products ?? [];
@@ -21,7 +22,8 @@ export function StorefrontClient({ store }: { store: Store }) {
     if (sort === "stock") result.sort((a, b) => b.stock - a.stock);
     return result;
   }, [products, query, sort]);
-  const whatsappUrl = store.whatsapp_phone ? `https://wa.me/${store.whatsapp_phone.replace(/\D/g, "")}` : null;
+  const whatsappNumber = toWhatsAppNumber(store.whatsapp_phone);
+  const whatsappUrl = whatsappNumber ? `https://wa.me/${whatsappNumber}` : null;
   const coverImage = products.find((product) => product.image)?.image;
 
   return <main className="storefront-page">
