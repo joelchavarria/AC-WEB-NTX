@@ -48,6 +48,14 @@ function friendlyServerError() {
   return userError("No pudimos preparar tu pedido en este momento. Intenta nuevamente en unos minutos.", 500);
 }
 
+function isMissingDeliveryReference(error: { code?: string; message?: string } | null) {
+  if (!error) {
+    return false;
+  }
+
+  return error.code === "PGRST204" && error.message?.includes("delivery_reference");
+}
+
 export async function POST(request: Request) {
   if (!supabaseUrl || !serviceRoleKey) {
     return friendlyServerError();
@@ -125,11 +133,25 @@ export async function POST(request: Request) {
       orderPayload.delivery_reference = body.customer.reference.trim();
     }
 
-    const { data: order, error: orderError } = await supabase
+    let { data: order, error: orderError } = await supabase
       .from("orders")
       .insert(orderPayload)
       .select("id")
       .single();
+
+    // Some deployed databases still use the original orders schema. A delivery
+    // reference is useful context, but it must not prevent the order from being
+    // prepared; it remains included in the WhatsApp message sent by the client.
+    if (isMissingDeliveryReference(orderError)) {
+      delete orderPayload.delivery_reference;
+      const retry = await supabase
+        .from("orders")
+        .insert(orderPayload)
+        .select("id")
+        .single();
+      order = retry.data;
+      orderError = retry.error;
+    }
 
     if (orderError || !order) {
       return friendlyServerError();
