@@ -10,7 +10,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "seed:emparejados": "node scripts/seed-emparejados.mjs"
+    "seed:emparejados": "node scripts/seed-emparejados.mjs",
+    "seed:collective": "node scripts/seed-ondie-collective.mjs"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",

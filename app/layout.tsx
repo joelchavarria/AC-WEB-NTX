@@ -18,6 +18,11 @@ export const metadata: Metadata = {
     description: "Descubre tiendas locales, conoce lo que venden y compra directamente a emprendedores de nuestra comunidad.",
     type: "website",
   },
+  icons: {
+    icon: "/ondie-icon.svg",
+    shortcut: "/ondie-icon.svg",
+    apple: "/ondie-icon.svg",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

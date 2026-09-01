@@ -8,10 +8,12 @@ export function AddToCartButton({
   product,
   storeId,
   storeName,
+  storeSlug,
 }: {
   product: Product;
   storeId: string;
   storeName: string;
+  storeSlug?: string;
 }) {
   const [added, setAdded] = useState(false);
 
@@ -19,7 +21,7 @@ export function AddToCartButton({
     <button
       className="button"
       onClick={() => {
-        addToCart({ ...product, storeId, storeName, quantity: 1 });
+        addToCart({ ...product, storeId, storeName, storeSlug, quantity: 1 });
         setAdded(true);
         window.setTimeout(() => setAdded(false), 1200);
       }}

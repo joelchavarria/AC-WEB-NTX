@@ -25,8 +25,8 @@ export function MarketplaceHome({ stores, error }: { stores: Store[]; error: str
 
   return <main className="marketplace-page">
     <header className="market-header">
-      <Link className="market-brand" href="/" aria-label="ONDIE, inicio"><span className="market-logo"><Storefront weight="fill" /></span><span>ONDIE</span></Link>
-      <label className="market-search"><MagnifyingGlass aria-hidden="true" /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar productos o tiendas..." /></label>
+      <Link className="market-brand" href="/" aria-label="ONDIE, inicio"><Image src="/ondie-logo.svg" alt="ONDIE" width={176} height={58} priority /></Link>
+      <label className="market-search"><MagnifyingGlass aria-hidden="true" /><input aria-label="Buscar productos o tiendas" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar productos o tiendas..." /></label>
       <nav className="market-nav" aria-label="Navegación principal"><a href="#stores">Colectivo</a><a href="#categories">Categorías</a><a href="#discover">Descubrir</a></nav>
       <div className="header-actions"><CartSummary /><Link href="/checkout" className="profile-button" aria-label="Mi cuenta"><UserCircle weight="bold" /></Link></div>
     </header>
@@ -42,7 +42,7 @@ export function MarketplaceHome({ stores, error }: { stores: Store[]; error: str
       <div className="market-content">
         <section className="market-hero" id="discover">
           <div className="hero-copy"><span className="hero-kicker"><Sparkle weight="fill" /> ONDIE · Colectivo de tiendas</span><h1>Tiendas con identidad,<br />productos con<br /><em>historia.</em></h1><p>Conoce qué vende cada negocio, explora sus catálogos y compra directamente a emprendedores de nuestra comunidad.</p><a href="#stores" className="lime-button">Conocer el colectivo <ArrowRight weight="bold" /></a></div>
-          <div className="hero-visual" aria-hidden="true"><Image src="/assets/marketplace-hero-products.png" alt="" fill priority sizes="(max-width: 760px) 100vw, 48vw" /></div>
+          <div className="hero-visual" aria-hidden="true"><Image src="/assets/marketplace-hero-products-optimized.jpg" alt="" fill priority sizes="(max-width: 760px) 100vw, 48vw" /></div>
           <div className="hero-dots"><span /><span className="active" /><span /></div>
         </section>
 

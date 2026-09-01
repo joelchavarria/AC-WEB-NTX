@@ -1,0 +1,23 @@
+<svg width="176" height="58" viewBox="0 0 176 58" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">ONDIE</title>
+  <desc id="desc">Logotipo azul y lima de ONDIE</desc>
+  <defs>
+    <linearGradient id="ondieBlue" x1="8" y1="8" x2="52" y2="51" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2448FF"/>
+      <stop offset="1" stop-color="#1026D8"/>
+    </linearGradient>
+    <linearGradient id="ondieLime" x1="34" y1="6" x2="51" y2="27" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E5FF18"/>
+      <stop offset="1" stop-color="#C8F200"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="150%" height="160%">
+      <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#142EDB" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+  <g filter="url(#softShadow)">
+    <path d="M47.5 29C47.5 39.2173 39.2173 47.5 29 47.5C18.7827 47.5 10.5 39.2173 10.5 29C10.5 18.7827 18.7827 10.5 29 10.5" stroke="url(#ondieBlue)" stroke-width="8" stroke-linecap="round"/>
+    <path d="M29 6.5H43.5C43.5 12.805 47.126 18.26 52.405 20.891L44.956 28.34C40.516 25.16 35.074 23.29 29.2 23.29L29 6.5Z" fill="url(#ondieLime)"/>
+    <path d="M51.3 21.7L43.85 29.15L37.55 22.85L45 15.4C46.42 18.09 48.61 20.28 51.3 21.7Z" fill="#D8FA00"/>
+  </g>
+  <text x="57" y="41" fill="#142FE3" font-family="Poppins, Inter, Arial, sans-serif" font-size="38" font-weight="600" letter-spacing="-2.4">Ondie</text>
+</svg>

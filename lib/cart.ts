@@ -3,6 +3,7 @@ import type { Product } from "@/lib/supabase";
 export type CartItem = Product & {
   storeId: string;
   storeName: string;
+  storeSlug?: string;
   quantity: number;
 };
 
@@ -39,6 +40,18 @@ export function addToCart(item: CartItem) {
 
 export function clearCart() {
   writeCart([]);
+}
+
+export function updateCartQuantity(productId: string, storeId: string, quantity: number) {
+  const cart = readCart();
+  const next = cart
+    .map((item) => item.id === productId && item.storeId === storeId ? { ...item, quantity: Math.max(0, quantity) } : item)
+    .filter((item) => item.quantity > 0);
+  writeCart(next);
+}
+
+export function removeFromCart(productId: string, storeId: string) {
+  writeCart(readCart().filter((item) => !(item.id === productId && item.storeId === storeId)));
 }
 
 export function subscribeToCart(callback: () => void) {

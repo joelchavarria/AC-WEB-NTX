@@ -17,7 +17,7 @@ export function CartSummary() {
   const count = items.reduce((total, item) => total + item.quantity, 0);
 
   return (
-    <Link href="/checkout" className="button secondary">
+    <Link href="/cart" className="button secondary" aria-label={`Carrito${count ? `, ${count} productos` : ""}`}>
       Carrito {count > 0 ? `(${count})` : ""}
     </Link>
   );
