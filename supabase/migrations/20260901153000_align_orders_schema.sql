@@ -48,6 +48,11 @@ create table if not exists public.order_status_history (
   created_at timestamptz not null default timezone('utc', now())
 );
 
+alter table public.order_status_history add column if not exists order_id uuid references public.orders(id) on delete cascade;
+alter table public.order_status_history add column if not exists status text;
+alter table public.order_status_history add column if not exists notes text;
+alter table public.order_status_history add column if not exists created_at timestamptz not null default timezone('utc', now());
+
 create index if not exists orders_store_id_created_at_idx on public.orders(store_id, created_at desc);
 create index if not exists order_items_order_id_idx on public.order_items(order_id);
 create index if not exists order_status_history_order_id_idx on public.order_status_history(order_id, created_at desc);

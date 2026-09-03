@@ -58,3 +58,13 @@ if (historyError) {
 } else {
   console.log("OK order_status_history");
 }
+
+for (const column of ["order_id", "status", "notes", "created_at"]) {
+  const { error } = await supabase.from("order_status_history").select(column).limit(1);
+
+  if (error) {
+    console.log(`Falta la columna ${column} en order_status_history. Debes agregarla manualmente en Supabase SQL Editor.`);
+  } else {
+    console.log(`OK order_status_history.${column}`);
+  }
+}

@@ -56,6 +56,14 @@ function isMissingDeliveryReference(error: { code?: string; message?: string } |
   return error.code === "PGRST204" && error.message?.includes("delivery_reference");
 }
 
+function isMissingHistoryNotes(error: { code?: string; message?: string } | null) {
+  if (!error) {
+    return false;
+  }
+
+  return error.code === "PGRST204" && error.message?.includes("notes");
+}
+
 export async function POST(request: Request) {
   if (!supabaseUrl || !serviceRoleKey) {
     return friendlyServerError();
@@ -173,11 +181,19 @@ export async function POST(request: Request) {
       return friendlyServerError();
     }
 
-    const { error: historyError } = await supabase.from("order_status_history").insert({
+    const historyPayload: Record<string, string> = {
       order_id: order.id,
       status: "nuevo",
       notes: "Pedido creado desde checkout web.",
-    });
+    };
+
+    let { error: historyError } = await supabase.from("order_status_history").insert(historyPayload);
+
+    if (isMissingHistoryNotes(historyError)) {
+      delete historyPayload.notes;
+      const retry = await supabase.from("order_status_history").insert(historyPayload);
+      historyError = retry.error;
+    }
 
     if (historyError) {
       return friendlyServerError();
