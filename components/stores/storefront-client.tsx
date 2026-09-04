@@ -9,7 +9,7 @@ import { CartSummary } from "@/components/cart/cart-summary";
 import type { Store } from "@/lib/supabase";
 import { toWhatsAppNumber } from "@/lib/whatsapp";
 
-export function StorefrontClient({ store }: { store: Store }) {
+export function StorefrontClient({ store, exclusive = false }: { store: Store; exclusive?: boolean }) {
   const products = store.products ?? [];
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("featured");
@@ -26,15 +26,21 @@ export function StorefrontClient({ store }: { store: Store }) {
   const whatsappUrl = whatsappNumber ? `https://wa.me/${whatsappNumber}` : null;
   const coverImage = products.find((product) => product.image)?.image;
 
-  return <main className="storefront-page">
-    <header className="storefront-header">
+  return <main className={`storefront-page${exclusive ? " storefront-page--exclusive" : ""}`}>
+    {exclusive ? (
+      <header className="exclusive-storefront-header">
+        <strong>{store.name}</strong>
+        <label className="storefront-search"><MagnifyingGlass /><input aria-label="Buscar en esta tienda" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`Buscar en ${store.name}...`} /></label>
+        <CartSummary />
+      </header>
+    ) : <header className="storefront-header">
       <Link href="/" className="storefront-brand"><Image src="/ondie-logo.svg" alt="ONDIE" width={176} height={58} priority /></Link>
       <label className="storefront-search"><MagnifyingGlass /><input aria-label="Buscar en esta tienda" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`Buscar en ${store.name}...`} /></label>
       <nav><Link href="/">Tiendas</Link><a href="#products">Productos</a><a href="#information">Información</a></nav>
       <div className="storefront-actions"><CartSummary /><Link href="/account" aria-label="Mi cuenta"><UserCircle weight="bold" /></Link></div>
-    </header>
+    </header>}
     <div className="storefront-shell">
-      <div className="store-breadcrumb"><Link href="/">Inicio</Link><span>/</span><Link href="/">Tiendas</Link><span>/</span><strong>{store.name}</strong></div>
+      {!exclusive ? <div className="store-breadcrumb"><Link href="/">Inicio</Link><span>/</span><Link href="/">Tiendas</Link><span>/</span><strong>{store.name}</strong></div> : null}
       <section className="store-cover">
         {coverImage ? <Image src={coverImage} alt="" fill priority sizes="100vw" /> : null}<div className="store-cover-shade" />
         <div className="store-identity"><div className="store-monogram"><Storefront weight="duotone" /></div><div><span className="verified"><CheckCircle weight="fill" /> Tienda verificada</span><h1>{store.name}</h1><p>{store.category ?? "Tienda local"}</p></div></div>
