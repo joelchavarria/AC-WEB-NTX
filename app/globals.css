@@ -550,6 +550,7 @@ h2 {
 @media (max-width: 760px) {
   .market-header { height: auto; padding: 16px 18px; grid-template-columns: 1fr auto; gap: 13px; }
   .market-search { grid-row: 2; grid-column: 1 / -1; max-width: none; }
+  .market-search input { min-width: 0; }
   .header-actions .profile-button { display: none; }
   .market-layout { display: block; }
   .category-sidebar { padding: 14px 18px 0; border: 0; overflow: hidden; }
@@ -567,6 +568,7 @@ h2 {
   .hero-visual img { object-fit: contain; object-position: center bottom; padding: 8px 10px 0; }
   .featured-grid { grid-template-columns: 1fr 1fr; }
   .store-visual { height: 110px; }
+  .featured-head { align-items: start; gap: 14px; flex-direction: column; }
   .store-info { grid-template-columns: 30px 1fr; padding: 10px; }
   .store-info button { display: none; }
   .store-avatar { width: 30px; height: 30px; }
@@ -701,15 +703,18 @@ h2 {
   .storefront-header { height: auto; padding: 14px 17px; grid-template-columns: 1fr auto; gap: 10px; }
   .storefront-brand img { width: 125px; }
   .storefront-search { grid-row: 2; grid-column: 1/-1; }
+  .storefront-search input { min-width: 0; }
   .storefront-actions > a:last-child { display: none; }
   .storefront-actions .button.secondary { font-size: 0; width: 42px; padding: 0; }
   .storefront-shell { width: calc(100% - 28px); }
-  .store-breadcrumb { overflow: hidden; white-space: nowrap; }
+  .store-breadcrumb { overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
   .store-cover { min-height: 400px; }
   .store-cover-shade { background: linear-gradient(0deg,rgba(4,14,34,.95),rgba(4,14,34,.2)); }
   .store-identity { left: 22px; top: auto; bottom: 108px; }
   .store-monogram { width: 76px; height: 76px; }
   .store-monogram svg { width: 34px; height: 34px; }
+  .store-identity h1 { font-size: 2rem; }
+  .store-identity p { max-width: 220px; }
   .store-cover-actions { left: 22px; right: 22px; bottom: 24px; }
   .store-cover-actions button { display: none; }
   .store-cover-actions a { width: 100%; justify-content: center; }
@@ -729,6 +734,16 @@ h2 {
   .store-benefits { margin-left: 0; grid-template-columns: 1fr; gap: 18px; padding: 22px; }
   .store-benefits > div { justify-content: start; }
   .mobile-cart-link { position: sticky; z-index: 10; bottom: 12px; margin: 16px auto 0; width: calc(100% - 20px); height: 48px; border-radius: 13px; display: flex; align-items: center; justify-content: center; gap: 8px; background: #142fe3; color: white; font-weight: 800; box-shadow: 0 12px 30px rgba(20,47,227,.3); }
+}
+
+@media (max-width: 520px) {
+  .store-identity { right: 22px; gap: 14px; }
+  .store-monogram { width: 62px; height: 62px; }
+  .store-monogram svg { width: 28px; height: 28px; }
+  .store-identity h1 { font-size: 1.6rem; }
+  .store-products-grid { grid-template-columns: 1fr; }
+  .catalog-heading { flex-direction: column; }
+  .catalog-sort { max-width: none; width: 100%; }
 }
 
 /* Dedicated ONDIE cart */
@@ -822,14 +837,17 @@ h2 {
   .cart-page-header { height: auto; padding: 13px 16px; grid-template-columns: 1fr auto; gap: 10px; }
   .cart-page-header > a img { width: 125px; }
   .cart-page-header > label { grid-row: 2; grid-column: 1/-1; }
+  .cart-page-header input { min-width: 0; }
   .cart-page-header > div > a:last-child { display: none; }
   .cart-page-header .button.secondary { width: 42px; padding: 0; font-size: 0; }
   .cart-page-shell { width: calc(100% - 28px); }
-  .cart-page-intro { padding-top: 28px; align-items: start; }
+  .cart-page-intro { padding-top: 28px; align-items: start; flex-direction: column; gap: 14px; }
   .cart-page-intro h1 { font-size: 1.65rem; }
-  .cart-page-intro > button { font-size: 0; }
+  .cart-page-intro h1 small { display: inline-flex; margin: 8px 0 0; }
+  .cart-page-intro > button { font-size: .72rem; }
   .cart-line-item { grid-template-columns: 74px 1fr 24px; gap: 10px; }
   .cart-item-image { width: 74px; height: 74px; }
+  .cart-item-copy p { white-space: normal; overflow: visible; text-overflow: clip; }
   .quantity-control { grid-column: 2; justify-self: start; }
   .cart-line-total { grid-column: 2; text-align: left; }
   .remove-line { grid-column: 3; grid-row: 1; }
@@ -838,6 +856,14 @@ h2 {
   .cart-whatsapp-note > svg { display: none; }
   .cart-benefits { grid-template-columns: 1fr; gap: 18px; padding: 22px; }
   .cart-benefits > div { justify-content: start; }
+}
+
+@media (max-width: 520px) {
+  .cart-store-group > header { grid-template-columns: 44px 1fr; align-items: start; }
+  .cart-store-group > header > a { grid-column: 2; justify-self: start; margin-top: 6px; font-size: .66rem; width: auto; padding: 8px 10px; }
+  .cart-store-group > footer { flex-direction: column; gap: 6px; }
+  .summary-store, .summary-row, .summary-total { gap: 12px; align-items: start; }
+  .summary-store > strong, .summary-row > strong, .summary-total > strong { text-align: right; margin-left: auto; }
 }
 
 /* Order generation */
@@ -960,10 +986,12 @@ h2 {
   .order-header { height: auto; padding: 13px 16px; grid-template-columns: 1fr auto; gap: 10px; }
   .order-header > a img { width: 125px; }
   .order-header > label { grid-row: 2; grid-column: 1/-1; }
+  .order-header input { min-width: 0; }
   .order-header > div > a:last-child { display: none; }
   .order-header .button.secondary { width: 42px; padding: 0; font-size: 0; }
   .order-shell { width: calc(100% - 28px); }
   .order-shell > h1 { font-size: 1.6rem; }
+  .order-breadcrumb { overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
   .order-steps { display: flex; }
   .order-steps i { display: none; }
   .order-steps > div { display: grid; justify-items: center; text-align: center; }
@@ -973,6 +1001,13 @@ h2 {
   .payment-options { grid-template-columns: 1fr; }
   .payment-account-card { flex-direction: column; }
   .payment-account-actions { justify-items: start; }
+  .order-store-summary > header { grid-template-columns: 42px 1fr; align-items: start; }
+  .order-store-summary > header a { grid-column: 2; justify-self: start; margin-top: 4px; }
+  .order-product { grid-template-columns: 58px 1fr; align-items: start; }
+  .order-product em { grid-column: 2; }
+  .order-product small { white-space: normal; overflow: visible; text-overflow: clip; max-width: none; }
+  .order-total-row, .order-grand-total { gap: 12px; align-items: start; }
+  .order-grand-total strong { margin-left: auto; text-align: right; }
   .order-benefits { grid-template-columns: 1fr; gap: 18px; padding: 22px; }
   .order-benefits > div { justify-content: start; }
 }
