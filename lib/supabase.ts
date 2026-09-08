@@ -24,10 +24,12 @@ export type Store = {
   description?: string | null;
   whatsapp_phone?: string | null;
   address?: string | null;
+  brand_color?: string | null;
   is_active?: boolean;
   store_json: {
     description?: string;
     accent?: string;
+    profile_settings?: { brandColor?: string };
     heroImage?: string;
     paymentMethods?: string[];
     paymentAccounts?: Array<{

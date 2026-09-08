@@ -16,17 +16,19 @@ export function AddToCartButton({
   storeSlug?: string;
 }) {
   const [added, setAdded] = useState(false);
+  const unavailable = product.fulfillment_mode === "inmediato" && product.stock < 1;
 
   return (
     <button
       className="button"
+      disabled={unavailable}
       onClick={() => {
         addToCart({ ...product, storeId, storeName, storeSlug, quantity: 1 });
         setAdded(true);
         window.setTimeout(() => setAdded(false), 1200);
       }}
     >
-      {added ? "Agregado" : "Agregar al carrito"}
+      {unavailable ? "Agotado" : added ? "Agregado" : "Agregar al carrito"}
     </button>
   );
 }

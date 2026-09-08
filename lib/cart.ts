@@ -9,6 +9,18 @@ export type CartItem = Product & {
 
 const CART_KEY = "ca-web-cart";
 const CART_UPDATED_EVENT = "ca-web-cart-updated";
+const CART_VERSION = 2;
+const CART_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+type StoredCart = {
+  version: number;
+  updatedAt: number;
+  items: CartItem[];
+};
+
+function maxQuantity(item: CartItem) {
+  return item.fulfillment_mode === "inmediato" ? Math.max(0, item.stock) : 99;
+}
 
 export function readCart() {
   if (typeof window === "undefined") {
@@ -16,11 +28,28 @@ export function readCart() {
   }
 
   const value = window.localStorage.getItem(CART_KEY);
-  return value ? (JSON.parse(value) as CartItem[]) : [];
+  if (!value) return [];
+
+  try {
+    const saved = JSON.parse(value) as StoredCart | CartItem[];
+    if (Array.isArray(saved) || saved.version !== CART_VERSION || Date.now() - saved.updatedAt > CART_MAX_AGE_MS) {
+      window.localStorage.removeItem(CART_KEY);
+      return [];
+    }
+    return saved.items.filter((item) => item?.id && item?.storeId && item.quantity > 0);
+  } catch {
+    window.localStorage.removeItem(CART_KEY);
+    return [];
+  }
 }
 
 export function writeCart(items: CartItem[]) {
-  window.localStorage.setItem(CART_KEY, JSON.stringify(items));
+  if (items.length) {
+    const saved: StoredCart = { version: CART_VERSION, updatedAt: Date.now(), items };
+    window.localStorage.setItem(CART_KEY, JSON.stringify(saved));
+  } else {
+    window.localStorage.removeItem(CART_KEY);
+  }
   window.dispatchEvent(new Event(CART_UPDATED_EVENT));
 }
 
@@ -29,9 +58,10 @@ export function addToCart(item: CartItem) {
   const existing = cart.find((entry) => entry.id === item.id && entry.storeId === item.storeId);
 
   if (existing) {
-    existing.quantity += item.quantity;
+    existing.quantity = Math.min(existing.quantity + item.quantity, maxQuantity(item));
   } else {
-    cart.push(item);
+    const quantity = Math.min(item.quantity, maxQuantity(item));
+    if (quantity > 0) cart.push({ ...item, quantity });
   }
 
   writeCart(cart);
@@ -48,9 +78,13 @@ export function removeStoreFromCart(storeId: string) {
 
 export function updateCartQuantity(productId: string, storeId: string, quantity: number) {
   const cart = readCart();
-  const next = cart
-    .map((item) => item.id === productId && item.storeId === storeId ? { ...item, quantity: Math.max(0, quantity) } : item)
-    .filter((item) => item.quantity > 0);
+  const next = cart.reduce<CartItem[]>((result, item) => {
+    const updated = item.id === productId && item.storeId === storeId
+      ? { ...item, quantity: Math.min(Math.max(0, quantity), maxQuantity(item)) }
+      : item;
+    if (updated.quantity > 0) result.push(updated);
+    return result;
+  }, []);
   writeCart(next);
 }
 

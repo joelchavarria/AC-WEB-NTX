@@ -40,7 +40,7 @@ function mapProductsWithImages(
 export async function getStores() {
   const { data: stores, error } = await supabase
     .from("stores")
-    .select("id, owner_profile_id, name, slug, category, description, whatsapp_phone, address, is_active, store_json")
+    .select("id, owner_profile_id, name, slug, category, description, whatsapp_phone, address, brand_color, is_active, store_json")
     .eq("is_active", true)
     .order("name", { ascending: true });
 
@@ -82,7 +82,7 @@ export async function getStoreBySlug(slug: string) {
   const normalizedSlug = normalizeStoreHandle(slug);
   const { data, error } = await supabase
     .from("stores")
-    .select("id, owner_profile_id, name, slug, category, description, whatsapp_phone, address, is_active, store_json")
+    .select("id, owner_profile_id, name, slug, category, description, whatsapp_phone, address, brand_color, is_active, store_json")
     .eq("slug", slug)
     .eq("is_active", true)
     .maybeSingle();
@@ -96,7 +96,7 @@ export async function getStoreBySlug(slug: string) {
   if (!store) {
     const { data: stores, error: storesError } = await supabase
       .from("stores")
-      .select("id, owner_profile_id, name, slug, category, description, whatsapp_phone, address, is_active, store_json")
+      .select("id, owner_profile_id, name, slug, category, description, whatsapp_phone, address, brand_color, is_active, store_json")
       .eq("is_active", true);
 
     if (storesError) {

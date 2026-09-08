@@ -2,12 +2,19 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import { ArrowRight, CheckCircle, Heart, MagnifyingGlass, MapPin, Package, ShareNetwork, ShieldCheck, SlidersHorizontal, SortAscending, Storefront, Truck, UserCircle, WhatsappLogo } from "@phosphor-icons/react";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { CartSummary } from "@/components/cart/cart-summary";
 import type { Store } from "@/lib/supabase";
 import { toWhatsAppNumber } from "@/lib/whatsapp";
+
+const DEFAULT_ACCENT = "#142fe3";
+
+function getStoreAccent(store: Store) {
+  const saved = store.brand_color ?? store.store_json?.accent ?? store.store_json?.profile_settings?.brandColor;
+  return typeof saved === "string" && /^#[0-9a-f]{6}$/i.test(saved) ? saved : DEFAULT_ACCENT;
+}
 
 export function StorefrontClient({ store, exclusive = false }: { store: Store; exclusive?: boolean }) {
   const products = store.products ?? [];
@@ -25,8 +32,9 @@ export function StorefrontClient({ store, exclusive = false }: { store: Store; e
   const whatsappNumber = toWhatsAppNumber(store.whatsapp_phone);
   const whatsappUrl = whatsappNumber ? `https://wa.me/${whatsappNumber}` : null;
   const coverImage = products.find((product) => product.image)?.image;
+  const storeAccent = getStoreAccent(store);
 
-  return <main className={`storefront-page${exclusive ? " storefront-page--exclusive" : ""}`}>
+  return <main className={`storefront-page${exclusive ? " storefront-page--exclusive" : ""}`} style={{ "--store-accent": storeAccent } as CSSProperties}>
     {exclusive ? (
       <header className="exclusive-storefront-header">
         <strong>{store.name}</strong>

@@ -49,14 +49,6 @@ function friendlyServerError() {
   return userError("No pudimos preparar tu pedido en este momento. Intenta nuevamente en unos minutos.", 500);
 }
 
-function isMissingDeliveryReference(error: { code?: string; message?: string } | null) {
-  if (!error) {
-    return false;
-  }
-
-  return error.code === "PGRST204" && error.message?.includes("delivery_reference");
-}
-
 export async function POST(request: Request) {
   if (!supabaseUrl || !serviceRoleKey) {
     return friendlyServerError();
@@ -84,7 +76,6 @@ export async function POST(request: Request) {
       return userError("Tu carrito cambió. Revísalo y vuelve a intentar.");
     }
 
-    const subtotal = group.items.reduce((sum, item) => sum + Number(item.price) * Number(item.quantity), 0);
     const recentWindow = new Date(Date.now() - 5 * 60 * 1000).toISOString();
     const { data: recentOrders, error: recentOrdersError } = await supabase
       .from("orders")
@@ -119,70 +110,25 @@ export async function POST(request: Request) {
       continue;
     }
 
-    const orderPayload: Record<string, string | number | null> = {
-      store_id: group.storeId,
-      customer_name: name,
-      customer_phone: phone,
-      delivery_address: address,
-      payment_method: paymentMethod,
-      subtotal,
-      total: subtotal,
-      status: "nuevo",
-    };
-
-    if (body.customer.reference?.trim()) {
-      orderPayload.delivery_reference = body.customer.reference.trim();
-    }
-
-    let { data: order, error: orderError } = await supabase
-      .from("orders")
-      .insert(orderPayload)
-      .select("id, order_number")
-      .single();
-
-    // Some deployed databases still use the original orders schema. A delivery
-    // reference is useful context, but it must not prevent the order from being
-    // prepared; it remains included in the WhatsApp message sent by the client.
-    if (isMissingDeliveryReference(orderError)) {
-      delete orderPayload.delivery_reference;
-      const retry = await supabase
-        .from("orders")
-        .insert(orderPayload)
-        .select("id, order_number")
-        .single();
-      order = retry.data;
-      orderError = retry.error;
-    }
-
-    if (orderError || !order) {
-      return friendlyServerError();
-    }
-
-    const itemsPayload = group.items.map((item) => ({
-      order_id: order.id,
-      product_id: item.id,
-      product_name: item.name,
-      unit_price: Number(item.price),
-      quantity: Number(item.quantity),
-      line_total: Number(item.price) * Number(item.quantity),
-    }));
-
-    const { error: itemsError } = await supabase.from("order_items").insert(itemsPayload);
-
-    if (itemsError) {
-      await supabase.from("orders").delete().eq("id", order.id);
-      return friendlyServerError();
-    }
-
-    const { error: historyError } = await supabase.from("order_status_history").insert({
-      order_id: order.id,
-      status: "nuevo",
+    const { data: created, error: orderError } = await supabase.rpc("create_store_order_with_inventory", {
+      p_store_id: group.storeId,
+      p_customer_name: name,
+      p_customer_phone: phone,
+      p_delivery_address: address,
+      p_delivery_reference: body.customer.reference?.trim() ?? "",
+      p_payment_method: paymentMethod,
+      p_items: group.items.map((item) => ({ id: item.id, quantity: Number(item.quantity) })),
     });
 
-    if (historyError) {
-      console.error("No se pudo registrar el historial del pedido", historyError);
+    if (orderError) {
+      const inventoryMessage = ["existencias", "producto", "tienda", "carrito"].some((word) =>
+        orderError.message.toLowerCase().includes(word),
+      );
+      return inventoryMessage ? userError(orderError.message) : friendlyServerError();
     }
 
+    const order = created?.[0] as { id: string; order_number: number } | undefined;
+    if (!order) return friendlyServerError();
     createdOrders.push({ id: order.id, orderNumber: order.order_number, storeId: group.storeId });
   }
 

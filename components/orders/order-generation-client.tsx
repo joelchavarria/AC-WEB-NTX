@@ -6,7 +6,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, Bank, Check, Copy, Info, LockKey, MagnifyingGlass, MapPin, Money, Package, ShieldCheck, Storefront, Truck, UserCircle, WhatsappLogo } from "@phosphor-icons/react";
 import { CartSummary } from "@/components/cart/cart-summary";
 import { useNoticeCenter } from "@/components/page/feedback/notice-center";
-import { readCart, removeStoreFromCart, subscribeToCart, type CartItem } from "@/lib/cart";
+import { clearCart, readCart, subscribeToCart, type CartItem } from "@/lib/cart";
 import { toWhatsAppNumber } from "@/lib/whatsapp";
 
 type Contacts = Record<string, {
@@ -92,7 +92,6 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
     setSentStoreIds(nextSent);
     setLastSent(receipt);
     window.localStorage.setItem(LAST_SENT_ORDER_KEY, JSON.stringify(receipt));
-    removeStoreFromCart(group.storeId);
     showNotice({ tone: "success", title: order?.orderNumber ? `Pedido ORD-${order.orderNumber} generado` : "Pedido generado", description: `Tu pedido para ${group.storeName} quedó registrado y fue retirado del carrito.` });
   }
 
@@ -142,6 +141,7 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
       setPreparedOrders(data?.orders ?? []);
       setSentStoreIds([]);
       setSubmitted(true);
+      clearCart();
       showNotice({ tone: "success", title: "Pedido listo", description: data?.message ?? "Tu pedido ya esta listo para enviarse por WhatsApp." });
     } catch (error) {
       showNotice({ tone: "error", title: "No pudimos preparar tu pedido", description: error instanceof Error ? error.message : "Intenta nuevamente en unos minutos." });
