@@ -42,6 +42,10 @@ export function clearCart() {
   writeCart([]);
 }
 
+export function removeStoreFromCart(storeId: string) {
+  writeCart(readCart().filter((item) => item.storeId !== storeId));
+}
+
 export function updateCartQuantity(productId: string, storeId: string, quantity: number) {
   const cart = readCart();
   const next = cart

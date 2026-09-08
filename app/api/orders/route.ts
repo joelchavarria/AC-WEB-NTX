@@ -24,6 +24,7 @@ type OrderRequest = {
 
 type ExistingOrder = {
   id: string;
+  order_number: number;
   store_id: string;
   customer_phone: string;
   delivery_address: string;
@@ -76,7 +77,7 @@ export async function POST(request: Request) {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  const createdOrders: Array<{ id: string; storeId: string }> = [];
+  const createdOrders: Array<{ id: string; orderNumber: number; storeId: string }> = [];
 
   for (const group of groups) {
     if (!group.storeId || !group.items?.length) {
@@ -87,7 +88,7 @@ export async function POST(request: Request) {
     const recentWindow = new Date(Date.now() - 5 * 60 * 1000).toISOString();
     const { data: recentOrders, error: recentOrdersError } = await supabase
       .from("orders")
-      .select("id, store_id, customer_phone, delivery_address, payment_method, status, created_at, order_items(product_id, quantity, unit_price)")
+      .select("id, order_number, store_id, customer_phone, delivery_address, payment_method, status, created_at, order_items(product_id, quantity, unit_price)")
       .eq("store_id", group.storeId)
       .eq("customer_phone", phone)
       .eq("delivery_address", address)
@@ -114,7 +115,7 @@ export async function POST(request: Request) {
     });
 
     if (duplicateOrder) {
-      createdOrders.push({ id: duplicateOrder.id, storeId: group.storeId });
+      createdOrders.push({ id: duplicateOrder.id, orderNumber: duplicateOrder.order_number, storeId: group.storeId });
       continue;
     }
 
@@ -136,7 +137,7 @@ export async function POST(request: Request) {
     let { data: order, error: orderError } = await supabase
       .from("orders")
       .insert(orderPayload)
-      .select("id")
+      .select("id, order_number")
       .single();
 
     // Some deployed databases still use the original orders schema. A delivery
@@ -147,7 +148,7 @@ export async function POST(request: Request) {
       const retry = await supabase
         .from("orders")
         .insert(orderPayload)
-        .select("id")
+        .select("id, order_number")
         .single();
       order = retry.data;
       orderError = retry.error;
@@ -182,7 +183,7 @@ export async function POST(request: Request) {
       console.error("No se pudo registrar el historial del pedido", historyError);
     }
 
-    createdOrders.push({ id: order.id, storeId: group.storeId });
+    createdOrders.push({ id: order.id, orderNumber: order.order_number, storeId: group.storeId });
   }
 
   return NextResponse.json({ orders: createdOrders, message: "Tu pedido ya está listo para enviarse por WhatsApp." });
