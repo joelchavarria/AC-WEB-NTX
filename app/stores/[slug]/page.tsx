@@ -8,7 +8,7 @@ export default async function StorePage({ params }: { params: { slug: string } }
   const store = await getStoreBySlug(params.slug);
 
   if (!store) {
-    return <main className="page"><div className="shell card stack"><h1>Tienda no encontrada</h1><Link href="/" className="button secondary">Volver a ONDIE</Link></div></main>;
+    return <main className="page"><div className="shell card stack"><h1>Tienda no encontrada</h1><p>Es posible que este enlace sea antiguo o que la tienda ya no tenga publicaciones activas.</p><Link href="/" className="button secondary">Volver a ONDIE</Link></div></main>;
   }
 
   return <StorefrontClient store={store} />;

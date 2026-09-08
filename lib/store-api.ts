@@ -2,6 +2,15 @@ import { supabase, type Store } from "@/lib/supabase";
 const fallbackImage =
   "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=600&h=600&fit=crop&auto=format";
 
+function normalizeStoreHandle(value: string) {
+  return value
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 function mapProductsWithImages(
   products: Array<{
     id: string;
@@ -70,6 +79,7 @@ export async function getStores() {
 }
 
 export async function getStoreBySlug(slug: string) {
+  const normalizedSlug = normalizeStoreHandle(slug);
   const { data, error } = await supabase
     .from("stores")
     .select("id, owner_profile_id, name, slug, category, description, whatsapp_phone, address, is_active, store_json")
@@ -81,7 +91,22 @@ export async function getStoreBySlug(slug: string) {
     throw new Error(error.message);
   }
 
-  const store = data as Store | null;
+  let store = data as Store | null;
+
+  if (!store) {
+    const { data: stores, error: storesError } = await supabase
+      .from("stores")
+      .select("id, owner_profile_id, name, slug, category, description, whatsapp_phone, address, is_active, store_json")
+      .eq("is_active", true);
+
+    if (storesError) {
+      throw new Error(storesError.message);
+    }
+
+    store = ((stores ?? []) as Store[]).find((entry) => {
+      return normalizeStoreHandle(entry.slug) === normalizedSlug || normalizeStoreHandle(entry.name) === normalizedSlug;
+    }) ?? null;
+  }
 
   if (!store) {
     return null;
