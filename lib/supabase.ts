@@ -24,6 +24,7 @@ export type Store = {
   description?: string | null;
   whatsapp_phone?: string | null;
   address?: string | null;
+  logo_url?: string | null;
   brand_color?: string | null;
   is_active?: boolean;
   store_json: {
@@ -51,6 +52,7 @@ export type Product = {
   name: string;
   price: number;
   description?: string | null;
+  category?: string | null;
   image?: string;
   thumbnail?: string;
   stock: number;

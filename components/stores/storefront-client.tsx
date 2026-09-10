@@ -2,17 +2,27 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { ArrowRight, CheckCircle, Heart, MagnifyingGlass, MapPin, Package, ShareNetwork, ShieldCheck, SlidersHorizontal, SortAscending, Storefront, Truck, UserCircle, WhatsappLogo } from "@phosphor-icons/react";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { CartSummary } from "@/components/cart/cart-summary";
+import { clearExclusiveStoreContext, writeExclusiveStoreContext } from "@/lib/cart";
 import type { Store } from "@/lib/supabase";
 import { toWhatsAppNumber } from "@/lib/whatsapp";
 
 const DEFAULT_ACCENT = "#142fe3";
+const gradientColorMap: Record<string, string> = {
+  "gradient-0": "#3532FF",
+  "gradient-1": "#FF6852",
+  "gradient-2": "#8038ED",
+  "gradient-3": "#19BE9C",
+  "gradient-4": "#FF465D",
+  "gradient-5": "#15162B",
+};
 
 function getStoreAccent(store: Store) {
   const saved = store.brand_color ?? store.store_json?.accent ?? store.store_json?.profile_settings?.brandColor;
+  if (typeof saved === "string" && gradientColorMap[saved]) return gradientColorMap[saved];
   return typeof saved === "string" && /^#[0-9a-f]{6}$/i.test(saved) ? saved : DEFAULT_ACCENT;
 }
 
@@ -20,21 +30,59 @@ export function StorefrontClient({ store, exclusive = false }: { store: Store; e
   const products = store.products ?? [];
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("featured");
+  const [activeCategory, setActiveCategory] = useState("Todos");
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [themeApplying, setThemeApplying] = useState(exclusive);
+  const categories = useMemo(() => ["Todos", ...Array.from(new Set(products.map((product) => product.category?.trim()).filter(Boolean) as string[])).sort((a, b) => a.localeCompare(b, "es"))], [products]);
   const visibleProducts = useMemo(() => {
     const search = query.trim().toLowerCase();
-    const result = search ? products.filter((product) => [product.name, product.description].some((value) => value?.toLowerCase().includes(search))) : [...products];
+    const byCategory = activeCategory === "Todos" ? products : products.filter((product) => product.category === activeCategory);
+    const result = search ? byCategory.filter((product) => [product.name, product.description, product.category].some((value) => value?.toLowerCase().includes(search))) : [...byCategory];
     if (sort === "price-low") result.sort((a, b) => a.price - b.price);
     if (sort === "price-high") result.sort((a, b) => b.price - a.price);
     if (sort === "stock") result.sort((a, b) => b.stock - a.stock);
     return result;
-  }, [products, query, sort]);
+  }, [activeCategory, products, query, sort]);
   const whatsappNumber = toWhatsAppNumber(store.whatsapp_phone);
   const whatsappUrl = whatsappNumber ? `https://wa.me/${whatsappNumber}` : null;
   const coverImage = products.find((product) => product.image)?.image;
   const storeAccent = getStoreAccent(store);
 
+  useEffect(() => {
+    if (exclusive) {
+      writeExclusiveStoreContext({ storeId: store.id, storeName: store.name, storeSlug: store.slug });
+      return;
+    }
+
+    clearExclusiveStoreContext();
+  }, [exclusive, store.id, store.name, store.slug]);
+
+  useEffect(() => {
+    if (!exclusive) {
+      return;
+    }
+
+    const existingThemeMeta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    const themeMeta = existingThemeMeta ?? document.head.appendChild(document.createElement("meta"));
+    const previousThemeColor = themeMeta?.content;
+
+    themeMeta.setAttribute("name", "theme-color");
+    themeMeta?.setAttribute("content", storeAccent);
+
+    const timeout = window.setTimeout(() => setThemeApplying(false), 650);
+
+    return () => {
+      window.clearTimeout(timeout);
+      if (!existingThemeMeta) {
+        themeMeta.remove();
+      } else if (previousThemeColor) {
+        themeMeta.setAttribute("content", previousThemeColor);
+      }
+    };
+  }, [exclusive, storeAccent]);
+
   return <main className={`storefront-page${exclusive ? " storefront-page--exclusive" : ""}`} style={{ "--store-accent": storeAccent } as CSSProperties}>
+    {themeApplying ? <div className="theme-applying" role="status" aria-live="polite"><span /><strong>Aplicando tema</strong><small>{store.name}</small></div> : null}
     {exclusive ? (
       <header className="exclusive-storefront-header">
         <strong>{store.name}</strong>
@@ -51,13 +99,13 @@ export function StorefrontClient({ store, exclusive = false }: { store: Store; e
       {!exclusive ? <div className="store-breadcrumb"><Link href="/">Inicio</Link><span>/</span><Link href="/">Tiendas</Link><span>/</span><strong>{store.name}</strong></div> : null}
       <section className="store-cover">
         {coverImage ? <Image src={coverImage} alt="" fill priority sizes="100vw" /> : null}<div className="store-cover-shade" />
-        <div className="store-identity"><div className="store-monogram"><Storefront weight="duotone" /></div><div><span className="verified"><CheckCircle weight="fill" /> Tienda verificada</span><h1>{store.name}</h1><p>{store.category ?? "Tienda local"}</p></div></div>
+        <div className="store-identity"><div className="store-monogram">{store.logo_url ? <Image src={store.logo_url} alt={store.name} fill sizes="108px" /> : <Storefront weight="duotone" />}</div><div><span className="verified"><CheckCircle weight="fill" /> Tienda verificada</span><h1>{store.name}</h1><p>{store.category ?? "Tienda local"}</p></div></div>
         <div className="store-cover-meta"><span><Truck weight="duotone" /> Envíos coordinados</span><span><ShieldCheck weight="duotone" /> Compra protegida</span>{store.address ? <span><MapPin weight="duotone" /> {store.address}</span> : null}</div>
         <div className="store-cover-actions"><button type="button"><ShareNetwork /> Compartir</button>{whatsappUrl ? <a href={whatsappUrl} target="_blank" rel="noreferrer"><WhatsappLogo weight="fill" /> Contactar por WhatsApp</a> : null}</div>
       </section>
       <div className="store-tabs"><a href="#products" className="active">Productos</a><a href="#information">Información</a><a href="#policies">Políticas</a></div>
       <div className="store-catalog-layout" id="products">
-        <aside className="catalog-sidebar"><div className="catalog-filter"><h3>Categorías</h3><button className="active" type="button"><Package weight="duotone" /> Todos los productos <span>{products.length}</span></button>{store.category ? <button type="button"><Storefront weight="duotone" /> {store.category}<span>{products.length}</span></button> : null}</div><div className="catalog-filter" id="information"><h3>Sobre esta tienda</h3><p>{store.description ?? store.store_json?.description ?? "Catálogo local disponible en ONDIE."}</p>{store.address ? <span className="store-detail"><MapPin /> {store.address}</span> : null}</div><div className="catalog-filter trust-filter" id="policies"><h3>Compra con confianza</h3><span><ShieldCheck /> Datos protegidos</span><span><Truck /> Entrega coordinada</span><span><WhatsappLogo /> Atención directa</span></div></aside>
+        <aside className="catalog-sidebar"><div className="catalog-filter"><h3>Categorías</h3>{categories.map((category) => <button key={category} className={activeCategory === category ? "active" : ""} type="button" onClick={() => setActiveCategory(category)}>{category === "Todos" ? <Package weight="duotone" /> : <Storefront weight="duotone" />} {category === "Todos" ? "Todos los productos" : category}<span>{category === "Todos" ? products.length : products.filter((product) => product.category === category).length}</span></button>)}</div><div className="catalog-filter" id="information"><h3>Sobre esta tienda</h3><p>{store.description ?? store.store_json?.description ?? "Catálogo local disponible en ONDIE."}</p>{store.address ? <span className="store-detail"><MapPin /> {store.address}</span> : null}</div><div className="catalog-filter trust-filter" id="policies"><h3>Compra con confianza</h3><span><ShieldCheck /> Datos protegidos</span><span><Truck /> Entrega coordinada</span><span><WhatsappLogo /> Atención directa</span></div></aside>
         <section className="catalog-main"><div className="catalog-heading"><div><span>CATÁLOGO</span><h2>Productos de {store.name}</h2><p>{visibleProducts.length} {visibleProducts.length === 1 ? "producto" : "productos"} disponibles</p></div><label className="catalog-sort"><SortAscending /><select aria-label="Ordenar productos" value={sort} onChange={(event) => setSort(event.target.value)}><option value="featured">Destacados</option><option value="price-low">Menor precio</option><option value="price-high">Mayor precio</option><option value="stock">Más disponibles</option></select></label></div>
           {visibleProducts.length ? <div className="store-products-grid">{visibleProducts.map((product) => <article className="store-product-card" key={product.id}><div className="store-product-image">{product.image ? <Image src={product.image} alt={product.name} fill sizes="(max-width: 760px) 50vw, 25vw" /> : <div className="product-image-fallback"><Package weight="duotone" /></div>}<button type="button" onClick={() => setFavorites((current) => current.includes(product.id) ? current.filter((id) => id !== product.id) : [...current, product.id])} aria-label="Guardar producto" className={favorites.includes(product.id) ? "favorite" : ""}><Heart weight={favorites.includes(product.id) ? "fill" : "regular"} /></button></div><div className="store-product-copy"><span className="product-store-name">{store.name}</span><h3>{product.name}</h3><p>{product.description ?? "Producto de catálogo"}</p><div className="product-price-row"><strong>C$ {product.price.toLocaleString("es-NI")}</strong><span className={product.stock > 2 ? "in-stock" : "low-stock"}>{product.stock > 2 ? "En stock" : "Últimas unidades"}</span></div><AddToCartButton product={product} storeId={store.id} storeName={store.name} storeSlug={store.slug} /></div></article>)}</div> : <div className="catalog-empty"><SlidersHorizontal /><h3>No encontramos productos</h3><p>Prueba con otra búsqueda.</p><button type="button" onClick={() => setQuery("")}>Limpiar búsqueda</button></div>}
         </section>

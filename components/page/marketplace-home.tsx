@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, Bag, CaretRight, ForkKnife, Heart, House, MagnifyingGlass, Package, Palette, ShoppingCart, Sneaker, Sparkle, Storefront, TShirt, UserCircle } from "@phosphor-icons/react";
 import { CartSummary } from "@/components/cart/cart-summary";
+import { clearExclusiveStoreContext } from "@/lib/cart";
 import type { Store } from "@/lib/supabase";
 
 const categoryIcons: Record<string, typeof TShirt> = {
@@ -38,6 +39,10 @@ export function MarketplaceHome({ stores, error }: { stores: Store[]; error: str
   const [favorite, setFavorite] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("");
   const visibleStores = stores;
+
+  useEffect(() => {
+    clearExclusiveStoreContext();
+  }, []);
   const categories = useMemo(() => {
     const values = [...new Set(visibleStores.map((store) => store.category?.trim()).filter(Boolean))] as string[];
     return values.map((label) => {

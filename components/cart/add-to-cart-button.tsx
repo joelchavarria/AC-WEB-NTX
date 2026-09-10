@@ -1,5 +1,6 @@
 "use client";
 
+import { Check, ShoppingCartSimple } from "@phosphor-icons/react";
 import { useState } from "react";
 import { addToCart } from "@/lib/cart";
 import type { Product } from "@/lib/supabase";
@@ -20,15 +21,16 @@ export function AddToCartButton({
 
   return (
     <button
-      className="button"
+      className={`button add-to-cart-button${added ? " is-added" : ""}`}
       disabled={unavailable}
       onClick={() => {
         addToCart({ ...product, storeId, storeName, storeSlug, quantity: 1 });
         setAdded(true);
-        window.setTimeout(() => setAdded(false), 1200);
+        window.setTimeout(() => setAdded(false), 1500);
       }}
+      aria-live="polite"
     >
-      {unavailable ? "Agotado" : added ? "Agregado" : "Agregar al carrito"}
+      {unavailable ? "Agotado" : <><span className="cart-button-icon"><ShoppingCartSimple weight="bold" />{added ? <Check weight="bold" /> : null}</span><span>{added ? "Producto en carrito" : "Agregar al carrito"}</span></>}
     </button>
   );
 }

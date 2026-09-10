@@ -22,16 +22,31 @@ import { CartSummary } from "@/components/cart/cart-summary";
 import {
   clearCart,
   readCart,
+  readExclusiveStoreContext,
   removeFromCart,
   subscribeToCart,
   updateCartQuantity,
+  writeCart,
   type CartItem,
+  type ExclusiveStoreContext,
 } from "@/lib/cart";
 
 export function CartPageClient() {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [exclusiveStore, setExclusiveStore] = useState<ExclusiveStoreContext | null>(null);
   useEffect(() => {
-    const sync = () => setItems(readCart());
+    const sync = () => {
+      const context = readExclusiveStoreContext();
+      const cart = readCart();
+      const scopedCart = context ? cart.filter((item) => item.storeId === context.storeId) : cart;
+
+      if (context && scopedCart.length !== cart.length) {
+        writeCart(scopedCart);
+      }
+
+      setExclusiveStore(context);
+      setItems(scopedCart);
+    };
     sync();
     return subscribeToCart(sync);
   }, []);
@@ -55,11 +70,12 @@ export function CartPageClient() {
     (sum, item) => sum + item.price * item.quantity,
     0,
   );
+  const catalogHref = exclusiveStore ? `/catalogo/${exclusiveStore.storeSlug}` : "/";
 
   return (
     <main className="ondie-cart-page">
       <header className="cart-page-header">
-        <Link href="/">
+        <Link href={catalogHref}>
           <Image
             src="/ondie-logo.svg"
             alt="ONDIE"
@@ -75,9 +91,7 @@ export function CartPageClient() {
             placeholder="Buscar productos o tiendas..."
           />
         </label>
-        <nav>
-          <Link href="/">Tiendas</Link>
-        </nav>
+        {!exclusiveStore ? <nav><Link href="/">Tiendas</Link></nav> : null}
         <div>
           <CartSummary />
           <Link href="/account" aria-label="Mi cuenta">
@@ -92,12 +106,11 @@ export function CartPageClient() {
             <h1>
               Mi carrito{" "}
               <small>
-                {groups.length} {groups.length === 1 ? "tienda" : "tiendas"}
+                {exclusiveStore ? exclusiveStore.storeName : `${groups.length} ${groups.length === 1 ? "tienda" : "tiendas"}`}
               </small>
             </h1>
             <p>
-              Revisa los productos que agregaste. Cada pedido se gestiona con la
-              tienda correspondiente.
+              {exclusiveStore ? `Revisa tu pedido de ${exclusiveStore.storeName}.` : "Revisa los productos que agregaste. Cada pedido se gestiona con la tienda correspondiente."}
             </p>
           </div>
           {items.length ? (
@@ -128,7 +141,7 @@ export function CartPageClient() {
                         </p>
                       </div>
                       <Link
-                        href={`/stores/${group.items[0]?.storeSlug ?? group.storeName.toLowerCase().replace(/\s+/g, "-")}`}
+                        href={exclusiveStore ? catalogHref : `/stores/${group.items[0]?.storeSlug ?? group.storeName.toLowerCase().replace(/\s+/g, "-")}`}
                       >
                         Ver tienda <ArrowRight />
                       </Link>
@@ -280,10 +293,10 @@ export function CartPageClient() {
             </div>
             <h2>Tu carrito está vacío</h2>
             <p>
-              Explora el colectivo y agrega productos de tus tiendas favoritas.
+              {exclusiveStore ? `Vuelve al catálogo de ${exclusiveStore.storeName} y agrega productos a tu pedido.` : "Explora el colectivo y agrega productos de tus tiendas favoritas."}
             </p>
-            <Link href="/">
-              Explorar tiendas <ArrowRight />
+            <Link href={catalogHref}>
+              {exclusiveStore ? "Volver al catálogo" : "Explorar tiendas"} <ArrowRight />
             </Link>
           </section>
         )}

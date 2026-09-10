@@ -9,6 +9,46 @@ export type CartItem = Product & {
 
 const CART_KEY = "ca-web-cart";
 const CART_UPDATED_EVENT = "ca-web-cart-updated";
+const EXCLUSIVE_STORE_KEY = "ca-web-exclusive-store";
+
+export type ExclusiveStoreContext = {
+  storeId: string;
+  storeName: string;
+  storeSlug: string;
+};
+
+export function readExclusiveStoreContext() {
+  if (typeof window === "undefined") {
+    return null as ExclusiveStoreContext | null;
+  }
+
+  const value = window.localStorage.getItem(EXCLUSIVE_STORE_KEY);
+
+  if (!value) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(value) as ExclusiveStoreContext;
+  } catch {
+    window.localStorage.removeItem(EXCLUSIVE_STORE_KEY);
+    return null;
+  }
+}
+
+export function writeExclusiveStoreContext(context: ExclusiveStoreContext) {
+  window.localStorage.setItem(EXCLUSIVE_STORE_KEY, JSON.stringify(context));
+  window.dispatchEvent(new Event(CART_UPDATED_EVENT));
+}
+
+export function clearExclusiveStoreContext() {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.removeItem(EXCLUSIVE_STORE_KEY);
+  window.dispatchEvent(new Event(CART_UPDATED_EVENT));
+}
 const CART_VERSION = 2;
 const CART_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -54,7 +94,8 @@ export function writeCart(items: CartItem[]) {
 }
 
 export function addToCart(item: CartItem) {
-  const cart = readCart();
+  const exclusiveStore = readExclusiveStoreContext();
+  const cart = exclusiveStore && exclusiveStore.storeId !== item.storeId ? [] : readCart();
   const existing = cart.find((entry) => entry.id === item.id && entry.storeId === item.storeId);
 
   if (existing) {
