@@ -92,7 +92,7 @@ export function StorefrontClient({ store, exclusive = false }: { store: Store; e
     ) : <header className="storefront-header">
       <Link href="/" className="storefront-brand"><Image src="/ondie-logo.svg" alt="ONDIE" width={176} height={58} priority /></Link>
       <label className="storefront-search"><MagnifyingGlass /><input aria-label="Buscar en esta tienda" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`Buscar en ${store.name}...`} /></label>
-      <nav><Link href="/">Tiendas</Link><a href="#products">Productos</a><a href="#information">Información</a></nav>
+      <nav><Link href="/">Tiendas</Link><a href="#products">Productos</a></nav>
       <div className="storefront-actions"><CartSummary /><Link href="/account" aria-label="Mi cuenta"><UserCircle weight="bold" /></Link></div>
     </header>}
     <div className="storefront-shell">
@@ -103,7 +103,7 @@ export function StorefrontClient({ store, exclusive = false }: { store: Store; e
         <div className="store-cover-meta"><span><Truck weight="duotone" /> Envíos coordinados</span><span><ShieldCheck weight="duotone" /> Compra protegida</span>{store.address ? <span><MapPin weight="duotone" /> {store.address}</span> : null}</div>
         <div className="store-cover-actions"><button type="button"><ShareNetwork /> Compartir</button>{whatsappUrl ? <a href={whatsappUrl} target="_blank" rel="noreferrer"><WhatsappLogo weight="fill" /> Contactar por WhatsApp</a> : null}</div>
       </section>
-      <div className="store-tabs"><a href="#products" className="active">Productos</a><a href="#information">Información</a><a href="#policies">Políticas</a></div>
+      <div className="store-tabs"><a href="#products" className="active">Productos</a></div>
       <div className="store-catalog-layout" id="products">
         <aside className="catalog-sidebar"><div className="catalog-filter"><h3>Categorías</h3>{categories.map((category) => <button key={category} className={activeCategory === category ? "active" : ""} type="button" onClick={() => setActiveCategory(category)}>{category === "Todos" ? <Package weight="duotone" /> : <Storefront weight="duotone" />} {category === "Todos" ? "Todos los productos" : category}<span>{category === "Todos" ? products.length : products.filter((product) => product.category === category).length}</span></button>)}</div><div className="catalog-filter" id="information"><h3>Sobre esta tienda</h3><p>{store.description ?? store.store_json?.description ?? "Catálogo local disponible en ONDIE."}</p>{store.address ? <span className="store-detail"><MapPin /> {store.address}</span> : null}</div><div className="catalog-filter trust-filter" id="policies"><h3>Compra con confianza</h3><span><ShieldCheck /> Datos protegidos</span><span><Truck /> Entrega coordinada</span><span><WhatsappLogo /> Atención directa</span></div></aside>
         <section className="catalog-main"><div className="catalog-heading"><div><span>CATÁLOGO</span><h2>Productos de {store.name}</h2><p>{visibleProducts.length} {visibleProducts.length === 1 ? "producto" : "productos"} disponibles</p></div><label className="catalog-sort"><SortAscending /><select aria-label="Ordenar productos" value={sort} onChange={(event) => setSort(event.target.value)}><option value="featured">Destacados</option><option value="price-low">Menor precio</option><option value="price-high">Mayor precio</option><option value="stock">Más disponibles</option></select></label></div>

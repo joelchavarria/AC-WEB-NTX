@@ -623,6 +623,9 @@ h2 {
 .exclusive-storefront-header .storefront-search input::placeholder { color: rgba(255,255,255,.78); }
 .exclusive-storefront-header .storefront-search:focus-within input::placeholder { color: #788499; }
 .exclusive-storefront-header .button.secondary { border-radius: 999px; border-color: rgba(255,255,255,.22); background: white; color: var(--store-accent); font-size: .78rem; padding: 10px 14px; }
+.cart-summary-link { position: relative; width: 42px; height: 42px; padding: 0 !important; display: inline-grid; place-items: center; border-radius: 50% !important; }
+.cart-summary-link > svg { width: 21px; height: 21px; }
+.cart-summary-link > span { position: absolute; top: -5px; right: -5px; min-width: 19px; height: 19px; padding: 0 5px; display: grid; place-items: center; border: 2px solid white; border-radius: 999px; background: #ff465d; color: white; font-size: .6rem; font-weight: 850; line-height: 1; }
 .storefront-page--exclusive .storefront-shell { padding-top: 24px; }
 .storefront-page--exclusive .store-cover { border: 1px solid color-mix(in srgb, var(--store-accent) 24%, #ffffff); box-shadow: 0 20px 44px color-mix(in srgb, var(--store-accent) 24%, transparent); }
 .storefront-page--exclusive .catalog-heading h2::after { content: ""; display: block; width: 54px; height: 5px; border-radius: 999px; margin-top: 9px; background: var(--store-accent); box-shadow: 0 8px 20px color-mix(in srgb, var(--store-accent) 28%, transparent); }
