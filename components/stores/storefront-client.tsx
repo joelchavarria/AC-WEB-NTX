@@ -46,7 +46,7 @@ export function StorefrontClient({ store, exclusive = false }: { store: Store; e
   }, [activeCategory, products, query, sort]);
   const whatsappNumber = toWhatsAppNumber(store.whatsapp_phone);
   const whatsappUrl = whatsappNumber ? `https://wa.me/${whatsappNumber}` : null;
-  const coverImage = products.find((product) => product.image)?.image;
+  const coverImage = store.logo_url ?? products.find((product) => product.image)?.image;
   const storeAccent = getStoreAccent(store);
 
   useEffect(() => {
