@@ -462,7 +462,6 @@ h2 {
 .market-nav a:hover { color: var(--market-blue); }
 .header-actions { display: flex; align-items: center; gap: 9px; }
 .header-actions .button.secondary { font-size: 0; width: 42px; height: 42px; padding: 0; border-radius: 50%; background: #f5f7fb; position: relative; }
-.header-actions .button.secondary::before { content: ""; width: 19px; height: 19px; display: block; background: currentColor; color: var(--market-blue); clip-path: polygon(0 10%, 18% 10%, 28% 66%, 78% 66%, 94% 28%, 25% 28%, 22% 16%, 0 16%); }
 .profile-button { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; background: #f5f7fb; color: var(--market-blue); }
 .profile-button svg { width: 22px; height: 22px; }
 
@@ -520,6 +519,7 @@ h2 {
 .store-badge { position: absolute; z-index: 2; top: 10px; left: 10px; padding: 5px 8px; border-radius: 999px; background: rgba(255,255,255,.9); color: #314055; font-size: .55rem; font-weight: 800; }
 .store-info { display: grid; grid-template-columns: 34px 1fr 26px; gap: 9px; align-items: center; padding: 12px 12px 8px; }
 .store-avatar { width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--market-blue); color: white; }
+.store-avatar img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; }
 .store-info h3 { font-size: .83rem; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .store-info p { color: #8290a2; font-size: .62rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .store-info button { border: 0; background: transparent; color: #8c97a8; padding: 3px; cursor: pointer; }
