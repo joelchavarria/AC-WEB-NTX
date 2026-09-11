@@ -20,9 +20,9 @@ export const metadata: Metadata = {
     type: "website",
   },
   icons: {
-    icon: "/ondie-icon.svg",
-    shortcut: "/ondie-icon.svg",
-    apple: "/ondie-icon.svg",
+    icon: "/ondie-icon.png",
+    shortcut: "/ondie-icon.png",
+    apple: "/ondie-icon.png",
   },
 };
 

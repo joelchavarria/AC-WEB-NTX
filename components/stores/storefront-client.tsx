@@ -107,7 +107,7 @@ export function StorefrontClient({ store, exclusive = false }: { store: Store; e
         <CartSummary />
       </header>
     ) : <header className="storefront-header">
-      <Link href="/" className="storefront-brand"><Image src="/ondie-logo.svg" alt="ONDIE" width={176} height={58} priority /></Link>
+      <Link href="/" className="storefront-brand"><Image src="/ondie-logo.png" alt="ONDIE" width={1051} height={310} priority /></Link>
       <label className="storefront-search"><MagnifyingGlass /><input aria-label="Buscar en esta tienda" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={`Buscar en ${store.name}...`} /></label>
       <nav><Link href="/">Tiendas</Link><a href="#products">Productos</a></nav>
       <div className="storefront-actions"><CartSummary /><Link href="/account" aria-label="Mi cuenta"><UserCircle weight="bold" /></Link></div>

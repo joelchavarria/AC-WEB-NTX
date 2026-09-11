@@ -77,10 +77,10 @@ export function CartPageClient() {
       <header className="cart-page-header">
         <Link href={catalogHref}>
           <Image
-            src="/ondie-logo.svg"
+            src="/ondie-logo.png"
             alt="ONDIE"
-            width={176}
-            height={58}
+            width={1051}
+            height={310}
             priority
           />
         </Link>
