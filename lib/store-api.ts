@@ -1,15 +1,7 @@
 import { supabase, type Store } from "@/lib/supabase";
+import { normalizeStoreSlug } from "@/lib/store-slug";
 const fallbackImage =
   "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=600&h=600&fit=crop&auto=format";
-
-function normalizeStoreHandle(value: string) {
-  return value
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
 
 function mapProductsWithImages(
   products: Array<{
@@ -50,7 +42,10 @@ export async function getStores() {
     throw new Error(error.message);
   }
 
-  const storeList = (stores ?? []) as Store[];
+  const storeList = ((stores ?? []) as Store[]).map((store) => ({
+    ...store,
+    slug: normalizeStoreSlug(store.slug || store.name),
+  }));
 
   if (storeList.length === 0) {
     return storeList;
@@ -81,7 +76,7 @@ export async function getStores() {
 }
 
 export async function getStoreBySlug(slug: string) {
-  const normalizedSlug = normalizeStoreHandle(slug);
+  const normalizedSlug = normalizeStoreSlug(slug);
   const { data, error } = await supabase
     .from("stores")
     .select("id, owner_profile_id, name, slug, category, description, whatsapp_phone, address, logo_url, brand_color, is_active, store_json")
@@ -106,7 +101,7 @@ export async function getStoreBySlug(slug: string) {
     }
 
     store = ((stores ?? []) as Store[]).find((entry) => {
-      return normalizeStoreHandle(entry.slug) === normalizedSlug || normalizeStoreHandle(entry.name) === normalizedSlug;
+      return normalizeStoreSlug(entry.slug) === normalizedSlug || normalizeStoreSlug(entry.name) === normalizedSlug;
     }) ?? null;
   }
 
@@ -129,6 +124,7 @@ export async function getStoreBySlug(slug: string) {
 
   return {
     ...store,
+    slug: normalizeStoreSlug(store.slug || store.name),
     products: productsWithImages,
   } as Store;
 }

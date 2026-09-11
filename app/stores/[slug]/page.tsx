@@ -1,14 +1,20 @@
 export const revalidate = 0;
 
-import Link from "next/link";
+import { permanentRedirect, redirect } from "next/navigation";
 import { StorefrontClient } from "@/components/stores/storefront-client";
 import { getStoreBySlug } from "@/lib/store-api";
+import { normalizeStoreSlug } from "@/lib/store-slug";
 
 export default async function StorePage({ params }: { params: { slug: string } }) {
-  const store = await getStoreBySlug(params.slug);
+  const canonicalSlug = normalizeStoreSlug(params.slug);
+  const store = await getStoreBySlug(canonicalSlug);
 
   if (!store) {
-    return <main className="page"><div className="shell card stack"><h1>Tienda no encontrada</h1><p>Es posible que este enlace sea antiguo o que la tienda ya no tenga publicaciones activas.</p><Link href="/" className="button secondary">Volver a ONDIE</Link></div></main>;
+    redirect("/");
+  }
+
+  if (canonicalSlug !== params.slug) {
+    permanentRedirect(`/stores/${canonicalSlug}`);
   }
 
   return <StorefrontClient store={store} />;

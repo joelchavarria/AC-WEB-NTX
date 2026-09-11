@@ -1,8 +1,10 @@
 export const revalidate = 0;
 
 import type { Metadata } from "next";
+import { permanentRedirect, redirect } from "next/navigation";
 import { StorefrontClient } from "@/components/stores/storefront-client";
 import { getStoreBySlug } from "@/lib/store-api";
+import { normalizeStoreSlug } from "@/lib/store-slug";
 
 export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const store = await getStoreBySlug(params.slug);
@@ -13,17 +15,15 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 export default async function ExclusiveStorePage({ params }: { params: { slug: string } }) {
-  const store = await getStoreBySlug(params.slug);
+  const canonicalSlug = normalizeStoreSlug(params.slug);
+  const store = await getStoreBySlug(canonicalSlug);
 
   if (!store) {
-    return (
-      <main className="exclusive-store-error">
-        <div>
-          <h1>Tienda no encontrada</h1>
-          <p>Es posible que este enlace sea antiguo o que la tienda ya no tenga publicaciones activas.</p>
-        </div>
-      </main>
-    );
+    redirect("/");
+  }
+
+  if (canonicalSlug !== params.slug) {
+    permanentRedirect(`/catalogo/${canonicalSlug}`);
   }
 
   return <StorefrontClient store={store} exclusive />;
