@@ -767,6 +767,13 @@ h2 {
 .add-to-cart-button.is-added { background: linear-gradient(135deg, #12a150, #0f7f40); box-shadow: 0 12px 26px rgba(18,161,80,.22); }
 .add-to-cart-button.is-added .cart-button-icon { background: rgba(255,255,255,.22); transform: translateX(-2px); }
 .add-to-cart-button.is-added .cart-button-icon svg:first-child { animation: cart-slide .38s ease both; }
+.product-quantity-control { min-height: 42px; display: grid; grid-template-columns: 42px 1fr 42px; align-items: stretch; overflow: hidden; border-radius: 10px; background: linear-gradient(135deg, #12a150, #0f7f40); color: white; }
+.product-quantity-control button { border: 0; background: rgba(255,255,255,.14); color: white; cursor: pointer; display: grid; place-items: center; }
+.product-quantity-control button:disabled { opacity: .4; cursor: not-allowed; }
+.product-quantity-control button svg { width: 17px; height: 17px; }
+.product-quantity-control span { display: flex; align-items: center; justify-content: center; gap: 7px; }
+.product-quantity-control small { font-size: .62rem; font-weight: 700; }
+.product-quantity-control strong { font-size: 1rem; }
 .catalog-empty { min-height: 330px; display: grid; place-items: center; align-content: center; gap: 7px; background: white; border: 1px dashed #cbd4e5; border-radius: 16px; color: #77849a; text-align: center; }
 .catalog-empty svg { width: 36px; height: 36px; color: var(--store-accent); }
 .catalog-empty h3 { color: #07172a; }
@@ -778,6 +785,7 @@ h2 {
 .store-benefits strong { font-size: .72rem; }
 .store-benefits small { color: #7b879a; font-size: .6rem; }
 .mobile-cart-link { display: none; }
+.store-mobile-information { display: none; }
 
 @keyframes cart-slide {
   0% { transform: translateX(0) rotate(0deg); }
@@ -836,6 +844,11 @@ h2 {
   .store-tabs { padding-left: 0; justify-content: center; }
   .store-catalog-layout { grid-template-columns: 1fr; }
   .catalog-sidebar { display: none; }
+  .store-mobile-information { display: grid; gap: 12px; margin: 0 0 16px; }
+  .store-mobile-information > div { padding: 16px; border: 1px solid #e3e8f1; border-radius: 14px; background: white; }
+  .store-mobile-information h3 { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; font-size: .92rem; }
+  .store-mobile-information h3 svg { width: 18px; height: 18px; color: var(--store-accent); }
+  .store-mobile-information p { color: #667389; font-size: .76rem; line-height: 1.55; white-space: pre-line; }
   .catalog-heading { align-items: start; gap: 12px; }
   .catalog-heading h2 { font-size: 1.2rem; }
   .catalog-sort { max-width: 140px; }
