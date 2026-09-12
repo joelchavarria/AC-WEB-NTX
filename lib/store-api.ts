@@ -34,7 +34,9 @@ function mapProductsWithImages(
 export async function getStores() {
   const { data: stores, error } = await supabase
     .from("stores")
-    .select("id, owner_profile_id, name, slug, category, description, whatsapp_phone, address, logo_url, brand_color, is_active, store_json")
+    .select(
+      "id, owner_profile_id, name, slug, category, description, whatsapp_phone, address, logo_url, brand_color, is_active, store_json",
+    )
     .eq("is_active", true)
     .order("name", { ascending: true });
 
@@ -53,7 +55,9 @@ export async function getStores() {
 
   const { data: products, error: productsError } = await supabase
     .from("products")
-    .select("id, store_id, name, description, category, price, stock, fulfillment_mode, is_active, product_images(image_url)")
+    .select(
+      "id, store_id, name, description, category, price, stock, fulfillment_mode, is_active, product_images(image_url)",
+    )
     .eq("is_active", true);
 
   if (productsError) {
@@ -79,7 +83,9 @@ export async function getStoreBySlug(slug: string) {
   const normalizedSlug = normalizeStoreSlug(slug);
   const { data, error } = await supabase
     .from("stores")
-    .select("id, owner_profile_id, name, slug, category, description, whatsapp_phone, address, logo_url, brand_color, is_active, store_json")
+    .select(
+      "id, owner_profile_id, name, slug, category, description, whatsapp_phone, address, logo_url, brand_color, is_active, store_json",
+    )
     .eq("slug", slug)
     .eq("is_active", true)
     .maybeSingle();
@@ -91,18 +97,45 @@ export async function getStoreBySlug(slug: string) {
   let store = data as Store | null;
 
   if (!store) {
+    const { data: alias, error: aliasError } = await supabase
+      .from("store_slug_history")
+      .select("store_id")
+      .eq("slug", normalizedSlug)
+      .maybeSingle();
+    if (aliasError) throw new Error(aliasError.message);
+    if (alias?.store_id) {
+      const { data: aliasedStore, error: aliasedStoreError } = await supabase
+        .from("stores")
+        .select(
+          "id, owner_profile_id, name, slug, category, description, whatsapp_phone, address, logo_url, brand_color, is_active, store_json",
+        )
+        .eq("id", alias.store_id)
+        .eq("is_active", true)
+        .maybeSingle();
+      if (aliasedStoreError) throw new Error(aliasedStoreError.message);
+      store = aliasedStore as Store | null;
+    }
+  }
+
+  if (!store) {
     const { data: stores, error: storesError } = await supabase
       .from("stores")
-      .select("id, owner_profile_id, name, slug, category, description, whatsapp_phone, address, logo_url, brand_color, is_active, store_json")
+      .select(
+        "id, owner_profile_id, name, slug, category, description, whatsapp_phone, address, logo_url, brand_color, is_active, store_json",
+      )
       .eq("is_active", true);
 
     if (storesError) {
       throw new Error(storesError.message);
     }
 
-    store = ((stores ?? []) as Store[]).find((entry) => {
-      return normalizeStoreSlug(entry.slug) === normalizedSlug || normalizeStoreSlug(entry.name) === normalizedSlug;
-    }) ?? null;
+    store =
+      ((stores ?? []) as Store[]).find((entry) => {
+        return (
+          normalizeStoreSlug(entry.slug) === normalizedSlug ||
+          normalizeStoreSlug(entry.name) === normalizedSlug
+        );
+      }) ?? null;
   }
 
   if (!store) {
@@ -111,7 +144,9 @@ export async function getStoreBySlug(slug: string) {
 
   const { data: products, error: productsError } = await supabase
     .from("products")
-    .select("id, store_id, name, description, category, price, stock, fulfillment_mode, is_active, product_images(image_url)")
+    .select(
+      "id, store_id, name, description, category, price, stock, fulfillment_mode, is_active, product_images(image_url)",
+    )
     .eq("store_id", store.id)
     .eq("is_active", true)
     .order("created_at", { ascending: false });

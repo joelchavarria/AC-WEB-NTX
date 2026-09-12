@@ -50,7 +50,12 @@ type Contacts = Record<
       walletLabel?: string;
       walletNumber?: string;
     }>;
-    deliveryFee: number;
+    deliveryMethods: Array<{
+      id: string;
+      name: string;
+      enabled: boolean;
+      fee: string;
+    }>;
     pickupEnabled: boolean;
     pickupAddress: string;
   }
@@ -71,6 +76,9 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
   const [payment, setPayment] = useState("transfer");
   const [deliveryMethod, setDeliveryMethod] =
     useState<DeliveryMethod>("store_delivery");
+  const [storeDeliveryMethods, setStoreDeliveryMethods] = useState<
+    Record<string, string>
+  >({});
   const [submitted, setSubmitted] = useState(false);
   const [preparedGroups, setPreparedGroups] = useState<OrderGroup[]>([]);
   const [preparedOrders, setPreparedOrders] = useState<PreparedOrder[]>([]);
@@ -136,10 +144,18 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
       ),
     0,
   );
+  const selectedStoreMethod = (storeId: string) => {
+    const methods = contacts[storeId]?.deliveryMethods ?? [];
+    return (
+      methods.find((method) => method.id === storeDeliveryMethods[storeId]) ??
+      methods[0]
+    );
+  };
   const shippingFee =
     deliveryMethod === "store_delivery"
       ? displayGroups.reduce(
-          (sum, group) => sum + (contacts[group.storeId]?.deliveryFee ?? 0),
+          (sum, group) =>
+            sum + (Number(selectedStoreMethod(group.storeId)?.fee) || 0),
           0,
         )
       : 0;
@@ -175,15 +191,16 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
     const orderNumber = preparedOrders.find(
       (order) => order.storeId === group.storeId,
     )?.orderNumber;
+    const deliveryOption = selectedStoreMethod(group.storeId);
     const deliveryLabel =
       deliveryMethod === "pickup"
         ? `Pick up${contacts[group.storeId]?.pickupAddress ? ` en ${contacts[group.storeId].pickupAddress}` : ""}`
         : deliveryMethod === "own_delivery"
           ? "El cliente coordinará su propio delivery"
-          : `Delivery de la tienda a ${address}${reference ? ` (${reference})` : ""}`;
+          : `${deliveryOption?.name ?? "Delivery de la tienda"} a ${address}${reference ? ` (${reference})` : ""}`;
     const fee =
       deliveryMethod === "store_delivery"
-        ? (contacts[group.storeId]?.deliveryFee ?? 0)
+        ? Number(deliveryOption?.fee) || 0
         : 0;
     return `Hola ${group.storeName}, quiero confirmar mi pedido${orderNumber ? ` ORD-${orderNumber}` : ""} generado desde ONDIE:\n\n${lines}\n\nSubtotal: C$ ${subtotal.toLocaleString("es-NI")}\nEnvío: C$ ${fee.toLocaleString("es-NI")}\nTotal: C$ ${(subtotal + fee).toLocaleString("es-NI")}\nCliente: ${name}\nWhatsApp: ${phone}\nEntrega: ${deliveryLabel}\nPago: ${payment === "transfer" ? "Transferencia / depósito" : "Efectivo"}`;
   }
@@ -238,6 +255,7 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
           deliveryMethod,
           groups: groups.map((group) => ({
             storeId: group.storeId,
+            deliveryOptionId: selectedStoreMethod(group.storeId)?.id,
             items: group.items.map((item) => ({
               id: item.id,
               name: item.name,
@@ -394,6 +412,40 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
                 </div>
                 {deliveryMethod === "store_delivery" ? (
                   <>
+                    {displayGroups.map((group) =>
+                      contacts[group.storeId]?.deliveryMethods?.length ? (
+                        <div
+                          className="order-field"
+                          key={`${group.storeId}-delivery-method`}
+                        >
+                          <label htmlFor={`delivery-method-${group.storeId}`}>
+                            Método de {group.storeName}
+                          </label>
+                          <select
+                            id={`delivery-method-${group.storeId}`}
+                            value={selectedStoreMethod(group.storeId)?.id ?? ""}
+                            onChange={(event) =>
+                              setStoreDeliveryMethods((current) => ({
+                                ...current,
+                                [group.storeId]: event.target.value,
+                              }))
+                            }
+                            disabled={submitted}
+                          >
+                            {contacts[group.storeId].deliveryMethods.map(
+                              (method) => (
+                                <option key={method.id} value={method.id}>
+                                  {method.name} · C${" "}
+                                  {(Number(method.fee) || 0).toLocaleString(
+                                    "es-NI",
+                                  )}
+                                </option>
+                              ),
+                            )}
+                          </select>
+                        </div>
+                      ) : null,
+                    )}
                     <div className="order-field">
                       <label htmlFor="order-address">
                         Dirección de entrega

@@ -5,7 +5,11 @@ import { StorefrontClient } from "@/components/stores/storefront-client";
 import { getStoreBySlug } from "@/lib/store-api";
 import { normalizeStoreSlug } from "@/lib/store-slug";
 
-export default async function StorePage({ params }: { params: { slug: string } }) {
+export default async function StorePage({
+  params,
+}: {
+  params: { slug: string };
+}) {
   const canonicalSlug = normalizeStoreSlug(params.slug);
   const store = await getStoreBySlug(canonicalSlug);
 
@@ -13,8 +17,8 @@ export default async function StorePage({ params }: { params: { slug: string } }
     redirect("/");
   }
 
-  if (canonicalSlug !== params.slug) {
-    permanentRedirect(`/stores/${canonicalSlug}`);
+  if (canonicalSlug !== params.slug || canonicalSlug !== store.slug) {
+    permanentRedirect(`/stores/${store.slug}`);
   }
 
   return <StorefrontClient store={store} />;

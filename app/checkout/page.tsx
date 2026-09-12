@@ -12,8 +12,17 @@ export default async function CheckoutPage() {
         category: store.category ?? "Tienda local",
         paymentMethods: store.store_json?.paymentMethods ?? [],
         paymentAccounts: store.store_json?.paymentAccounts ?? [],
-        deliveryFee:
-          Number(store.store_json?.profile_settings?.managuaFee) || 0,
+        deliveryMethods:
+          store.store_json?.profile_settings?.deliveryMethods?.filter(
+            (method) => method.enabled,
+          ) ?? [
+            {
+              id: "standard",
+              name: "Delivery de la tienda",
+              enabled: true,
+              fee: store.store_json?.profile_settings?.managuaFee ?? "0",
+            },
+          ],
         pickupEnabled:
           store.store_json?.profile_settings?.pickupEnabled ?? false,
         pickupAddress: store.store_json?.profile_settings?.pickupAddress ?? "",

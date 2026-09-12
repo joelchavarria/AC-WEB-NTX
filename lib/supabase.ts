@@ -37,6 +37,19 @@ export type Store = {
       managuaFee?: string;
       pickupEnabled?: boolean;
       pickupAddress?: string;
+      businessHours?: Array<{
+        day: string;
+        label: string;
+        open: boolean;
+        opensAt: string;
+        closesAt: string;
+      }>;
+      deliveryMethods?: Array<{
+        id: string;
+        name: string;
+        enabled: boolean;
+        fee: string;
+      }>;
     };
     heroImage?: string;
     paymentMethods?: string[];

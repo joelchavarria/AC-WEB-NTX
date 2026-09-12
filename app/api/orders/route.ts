@@ -12,6 +12,7 @@ type OrderRequest = {
   deliveryMethod: "pickup" | "own_delivery" | "store_delivery";
   groups: Array<{
     storeId: string;
+    deliveryOptionId?: string;
     items: Array<{
       id: string;
       name: string;
@@ -175,8 +176,16 @@ export async function POST(request: Request) {
       .select("store_json")
       .eq("id", group.storeId)
       .single();
-    const configuredFee =
-      Number(store?.store_json?.profile_settings?.managuaFee) || 0;
+    const configuredMethods = store?.store_json?.profile_settings
+      ?.deliveryMethods as
+      Array<{ id: string; enabled: boolean; fee: string }> | undefined;
+    const configuredMethod =
+      configuredMethods?.find(
+        (method) => method.enabled && method.id === group.deliveryOptionId,
+      ) ?? configuredMethods?.find((method) => method.enabled);
+    const configuredFee = configuredMethod
+      ? Number(configuredMethod.fee) || 0
+      : Number(store?.store_json?.profile_settings?.managuaFee) || 0;
     const shippingFee = deliveryMethod === "store_delivery" ? configuredFee : 0;
     const { data: savedOrder, error: deliveryError } = await supabase
       .from("orders")
