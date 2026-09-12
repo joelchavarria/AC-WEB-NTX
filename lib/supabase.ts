@@ -30,7 +30,14 @@ export type Store = {
   store_json: {
     description?: string;
     accent?: string;
-    profile_settings?: { brandColor?: string; hours?: string; coverImage?: string };
+    profile_settings?: {
+      brandColor?: string;
+      hours?: string;
+      coverImage?: string;
+      managuaFee?: string;
+      pickupEnabled?: boolean;
+      pickupAddress?: string;
+    };
     heroImage?: string;
     paymentMethods?: string[];
     paymentAccounts?: Array<{
