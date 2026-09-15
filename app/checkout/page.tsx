@@ -1,3 +1,5 @@
+export const metadata = { robots: { index: false, follow: true } };
+
 import { OrderGenerationClient } from "@/components/orders/order-generation-client";
 import { getStores } from "@/lib/store-api";
 

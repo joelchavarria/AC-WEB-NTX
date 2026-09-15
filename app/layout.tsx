@@ -1,3 +1,4 @@
+import { siteUrl } from "@/lib/seo";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
@@ -11,14 +12,15 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://ac-web-ntx.vercel.app"),
-  title: "ONDIE | Colectivo de tiendas",
+  metadataBase: siteUrl,
+  title: "ONDIE | Tiendas locales y catálogos en línea",
   description: "Descubre tiendas locales, conoce lo que venden y compra directamente a emprendedores de nuestra comunidad.",
   openGraph: {
     title: "ONDIE | Colectivo de tiendas",
     description: "Descubre tiendas locales, conoce lo que venden y compra directamente a emprendedores de nuestra comunidad.",
     type: "website",
   },
+  twitter: { card: "summary", title: "ONDIE | Tiendas locales y catálogos en línea", description: "Descubre negocios locales y compra directamente a emprendedores en ONDIE." },
   icons: {
     icon: "/ondie-icon.png",
     shortcut: "/ondie-icon.png",

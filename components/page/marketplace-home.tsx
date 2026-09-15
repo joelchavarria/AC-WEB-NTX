@@ -81,7 +81,7 @@ export function MarketplaceHome({ stores, error }: { stores: Store[]; error: str
 
       <div className="market-content">
         <section className="market-hero" id="discover">
-          <div className="hero-copy"><span className="hero-kicker"><Sparkle weight="fill" /> ONDIE · Colectivo de tiendas</span><h1>Tiendas con identidad,<br />productos con<br /><em>historia.</em></h1><p>Conoce qué vende cada negocio, explora sus catálogos y compra directamente a emprendedores de nuestra comunidad.</p><a href="#stores" className="lime-button">Conocer el colectivo <ArrowRight weight="bold" /></a></div>
+          <div className="hero-copy"><span className="hero-kicker"><Sparkle weight="fill" /> ONDIE · Colectivo de tiendas</span><h1>Tiendas locales,<br />productos con<br /><em>historia.</em></h1><p>Conoce qué vende cada negocio, explora sus catálogos y compra directamente a emprendedores de nuestra comunidad.</p><a href="#stores" className="lime-button">Conocer el colectivo <ArrowRight weight="bold" /></a></div>
           <div className="hero-visual" aria-hidden="true"><Image src="/assets/marketplace-hero-products-optimized.jpg" alt="" fill priority sizes="(max-width: 760px) 100vw, 48vw" /></div>
           <div className="hero-dots"><span /><span className="active" /><span /></div>
         </section>
