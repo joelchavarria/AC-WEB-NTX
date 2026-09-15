@@ -7,6 +7,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error("Missing Supabase environment variables.");
 }
 
+if (new URL(supabaseUrl).protocol !== "https:") {
+  throw new Error("Supabase requiere una conexión HTTPS segura.");
+}
+
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,

@@ -8,16 +8,17 @@ import { normalizeStoreSlug } from "@/lib/store-slug";
 export default async function StorePage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const canonicalSlug = normalizeStoreSlug(params.slug);
+  const { slug } = await params;
+  const canonicalSlug = normalizeStoreSlug(slug);
   const store = await getStoreBySlug(canonicalSlug);
 
   if (!store) {
     redirect("/");
   }
 
-  if (canonicalSlug !== params.slug || canonicalSlug !== store.slug) {
+  if (canonicalSlug !== slug || canonicalSlug !== store.slug) {
     permanentRedirect(`/stores/${store.slug}`);
   }
 

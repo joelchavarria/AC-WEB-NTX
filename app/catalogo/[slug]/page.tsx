@@ -9,9 +9,10 @@ import { normalizeStoreSlug } from "@/lib/store-slug";
 export async function generateMetadata({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
-  const store = await getStoreBySlug(params.slug);
+  const { slug } = await params;
+  const store = await getStoreBySlug(slug);
   return {
     title: store ? `${store.name} | Catálogo` : "Tienda no encontrada",
     description:
@@ -25,16 +26,17 @@ export async function generateMetadata({
 export default async function ExclusiveStorePage({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const canonicalSlug = normalizeStoreSlug(params.slug);
+  const { slug } = await params;
+  const canonicalSlug = normalizeStoreSlug(slug);
   const store = await getStoreBySlug(canonicalSlug);
 
   if (!store) {
     redirect("/");
   }
 
-  if (canonicalSlug !== params.slug || canonicalSlug !== store.slug) {
+  if (canonicalSlug !== slug || canonicalSlug !== store.slug) {
     permanentRedirect(`/catalogo/${store.slug}`);
   }
 
