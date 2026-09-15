@@ -772,8 +772,7 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
                   </Link>
                 ) : null}
                 <p className="privacy-order">
-                  <LockKey /> Tus datos se usan únicamente para coordinar este
-                  pedido.
+                  <LockKey /> Tus datos se usan para gestionar tu pedido conforme a nuestra <Link href="/privacidad">Política de privacidad</Link>. Consulta los <Link href="/terminos">Términos y condiciones</Link>.
                 </p>
               </section>
             </aside>

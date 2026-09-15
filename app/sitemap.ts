@@ -3,7 +3,7 @@ import { supabase } from "@/lib/supabase";
 import { siteUrl } from "@/lib/seo";
 export const revalidate = 3600;
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const entries: MetadataRoute.Sitemap = [{ url: siteUrl.href }];
+  const entries: MetadataRoute.Sitemap = [{ url: siteUrl.href }, { url: new URL("/privacidad", siteUrl).href }, { url: new URL("/terminos", siteUrl).href }];
   for (let offset = 0; ; offset += 500) {
     const { data, error } = await supabase.from("stores").select("slug").eq("is_active", true).order("id").range(offset, offset + 499);
     if (error) throw new Error("No se pudo generar el sitemap de tiendas.");

@@ -1,0 +1,81 @@
+{
+  "version": "2026-09-14",
+  "updated": "14 de septiembre de 2026",
+  "contact": "joelchavarria308@gmail.com",
+  "privacy": {
+    "title": "Política de privacidad",
+    "intro": "Esta política explica el tratamiento de información al usar ONDIE, su aplicación móvil y su sitio web. Para consultas de privacidad, utiliza el contacto indicado al final.",
+    "sections": [
+      {
+        "title": "Información que tratamos",
+        "body": "Tratamos correo electrónico y datos de perfil para gestionar cuentas; nombre, teléfono, dirección, referencias, preferencias e historial para administrar clientes y pedidos; y datos de tiendas, productos e imágenes que publiques. Los proveedores pueden procesar información técnica como IP, dispositivo y registros de conexión. La app registra errores asociados a la cuenta para diagnosticar fallos."
+      },
+      {
+        "title": "Finalidades",
+        "body": "Utilizamos la información para autenticar usuarios, publicar catálogos, gestionar inventario y pedidos, coordinar entregas, atender solicitudes y proteger el servicio. Los datos de clientes quedan asociados a la tienda correspondiente. La web incorpora Vercel Analytics y Speed Insights para medir uso y rendimiento."
+      },
+      {
+        "title": "Tiendas y proveedores",
+        "body": "La tienda recibe los datos necesarios para gestionar tu compra y es responsable de su propio tratamiento de clientes. Supabase presta servicios de autenticación, base de datos y almacenamiento; Vercel aloja la web y proporciona medición de uso y rendimiento. Sus servicios pueden tratar información fuera de tu país, según su infraestructura y condiciones. Si compartes un pedido por WhatsApp, el contenido seleccionado se comunica a la tienda a través de ese servicio y se aplican también sus políticas."
+      },
+      {
+        "title": "Contenido público y permisos",
+        "body": "Los catálogos, datos públicos de tiendas e imágenes publicadas pueden ser visibles para cualquier visitante. Evita incluir información privada en ellos. La app solicita acceso a fotos al elegir imágenes; puedes denegar o revocar ese permiso desde los ajustes del teléfono. No se requiere acceso a tu ubicación precisa para las funciones actuales."
+      },
+      {
+        "title": "Almacenamiento local",
+        "body": "Guardamos la sesión para mantener el acceso y el carrito para recordar productos seleccionados. En la app nativa, la sesión se guarda en almacenamiento protegido del dispositivo; en la web se usa almacenamiento del navegador. Puedes cerrar sesión y borrar los datos locales desde los ajustes de tu navegador o dispositivo."
+      },
+      {
+        "title": "Conservación y seguridad",
+        "body": "Los datos permanecen mientras son necesarios para operar la cuenta, gestionar pedidos y atender obligaciones aplicables. La eliminación de datos locales no borra los registros del servidor. Puedes solicitar su eliminación por correo; ciertos registros podrán conservarse cuando exista una obligación legal o una necesidad justificada, que se explicará al atender tu solicitud. Usamos HTTPS y controles de acceso por tienda; ninguna medida elimina todos los riesgos."
+      },
+      {
+        "title": "Solicitudes y derechos",
+        "body": "Puedes solicitar acceso, corrección, oposición o eliminación de tus datos, y retirar autorizaciones cuando corresponda. Escribe al contacto con una descripción de tu solicitud; podremos pedir la información mínima necesaria para verificar tu identidad. Para datos gestionados directamente por una tienda, puedes contactar también a esa tienda. No envíes contraseñas ni tokens de acceso."
+      },
+      {
+        "title": "Cambios y contacto",
+        "body": "Publicaremos las revisiones con su fecha de actualización y comunicaremos cambios sustanciales por los canales disponibles. Contacto de privacidad y soporte: joelchavarria308@gmail.com."
+      }
+    ]
+  },
+  "terms": {
+    "title": "Términos y condiciones",
+    "intro": "Estos términos describen el uso de ONDIE en la app móvil y la web. Revisa también la Política de privacidad antes de facilitar datos o realizar pedidos.",
+    "sections": [
+      {
+        "title": "Qué ofrece ONDIE",
+        "body": "ONDIE permite descubrir tiendas, publicar catálogos y gestionar clientes, inventario y pedidos. Cada tienda identifica y ofrece sus productos. La compra, el pago y la entrega se coordinan con la tienda; ONDIE no sustituye al vendedor ni garantiza su cumplimiento."
+      },
+      {
+        "title": "Cuentas y uso permitido",
+        "body": "Facilita datos veraces, protege tus credenciales y avisa si detectas acceso no autorizado. Usa el servicio únicamente si tienes capacidad legal para hacerlo o la autorización que corresponda. No está permitido suplantar identidades, acceder a datos ajenos, introducir contenido malicioso, enviar pedidos fraudulentos ni interferir con el servicio."
+      },
+      {
+        "title": "Responsabilidades de las tiendas",
+        "body": "La tienda debe mantener información correcta de productos, precios, existencias, medios de pago y entrega; contar con derechos sobre el contenido publicado; y cumplir sus obligaciones comerciales, fiscales, de consumo y protección de datos. Debe informar al comprador de condiciones de devolución, cancelación y garantías antes de cerrar la compra."
+      },
+      {
+        "title": "Pedidos, precios y pagos",
+        "body": "Preparar o compartir un pedido expresa una solicitud de compra y no acredita que el pago o la entrega se hayan completado. Confirma con la tienda disponibilidad, importe final, gastos de envío, plazo y forma de pago. Los pagos se coordinan directamente con la tienda; no compartas contraseñas bancarias ni códigos de seguridad. Las cancelaciones, devoluciones y reclamos se atienden con el vendedor conforme a las condiciones informadas y la ley aplicable."
+      },
+      {
+        "title": "Contenido y propiedad intelectual",
+        "body": "Conservas los derechos que tengas sobre tu contenido y autorizas su alojamiento y exhibición en la medida necesaria para prestar el servicio. No publiques contenido ilegal ni que vulnere derechos de terceros. Las marcas y elementos propios de ONDIE no se pueden utilizar de forma que sugiera una autorización inexistente."
+      },
+      {
+        "title": "Disponibilidad y medidas de protección",
+        "body": "El servicio puede sufrir interrupciones o cambios. Ante abuso o riesgos de seguridad podemos restringir funciones o suspender cuentas y revisar los hechos. Puedes consultar o reclamar esa medida mediante el contacto de soporte. Mantén copias de la información de negocio que necesites conservar."
+      },
+      {
+        "title": "Responsabilidad y derechos aplicables",
+        "body": "Cada parte responde por sus actuaciones según la legislación aplicable. Estos términos no excluyen derechos irrenunciables de consumidores ni responsabilidades que legalmente no puedan limitarse. Para problemas con productos o entregas, contacta primero a la tienda; para fallos de la plataforma, escribe a soporte."
+      },
+      {
+        "title": "Cambios y contacto",
+        "body": "Las revisiones se publicarán con su fecha y los cambios sustanciales se comunicarán por los canales disponibles. Contacto de ONDIE: joelchavarria308@gmail.com."
+      }
+    ]
+  }
+}
