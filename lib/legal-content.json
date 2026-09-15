@@ -7,6 +7,10 @@
     "intro": "Esta política explica el tratamiento de información al usar ONDIE, su aplicación móvil y su sitio web. Para consultas de privacidad, utiliza el contacto indicado al final.",
     "sections": [
       {
+        "title": "Responsable del servicio",
+        "body": "Jack Chavarria es el responsable de ONDIE (Online Digital Emprendedor), su aplicación móvil y su sitio web. Contacto de privacidad y soporte: joelchavarria308@gmail.com."
+      },
+      {
         "title": "Información que tratamos",
         "body": "Tratamos correo electrónico y datos de perfil para gestionar cuentas; nombre, teléfono, dirección, referencias, preferencias e historial para administrar clientes y pedidos; y datos de tiendas, productos e imágenes que publiques. Los proveedores pueden procesar información técnica como IP, dispositivo y registros de conexión. La app registra errores asociados a la cuenta para diagnosticar fallos."
       },
@@ -45,6 +49,10 @@
     "intro": "Estos términos describen el uso de ONDIE en la app móvil y la web. Revisa también la Política de privacidad antes de facilitar datos o realizar pedidos.",
     "sections": [
       {
+        "title": "Responsable del servicio",
+        "body": "Jack Chavarria es el responsable de ONDIE (Online Digital Emprendedor), su aplicación móvil y su sitio web. Contacto de privacidad y soporte: joelchavarria308@gmail.com."
+      },
+      {
         "title": "Qué ofrece ONDIE",
         "body": "ONDIE permite descubrir tiendas, publicar catálogos y gestionar clientes, inventario y pedidos. Cada tienda identifica y ofrece sus productos. La compra, el pago y la entrega se coordinan con la tienda; ONDIE no sustituye al vendedor ni garantiza su cumplimiento."
       },
@@ -77,5 +85,6 @@
         "body": "Las revisiones se publicarán con su fecha y los cambios sustanciales se comunicarán por los canales disponibles. Contacto de ONDIE: joelchavarria308@gmail.com."
       }
     ]
-  }
+  },
+  "responsible": "Jack Chavarria"
 }
