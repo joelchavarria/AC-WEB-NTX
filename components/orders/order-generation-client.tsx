@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -87,6 +87,7 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
   const [exclusiveStore, setExclusiveStore] =
     useState<ExclusiveStoreContext | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const submissionLock = useRef(false);
   useEffect(() => {
     const sync = () => {
       const context = readExclusiveStoreContext();
@@ -234,38 +235,32 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
   async function submit(event: FormEvent) {
     event.preventDefault();
 
-    if (!valid || isSaving) {
+    if (!valid || submissionLock.current) {
       return;
     }
 
+    submissionLock.current = true;
     setIsSaving(true);
 
     try {
+      const requestBody = JSON.stringify({
+        customer: { name, phone, address: deliveryMethod === "store_delivery" ? address : "", reference: deliveryMethod === "store_delivery" ? reference : "" },
+        paymentMethod: payment,
+        deliveryMethod,
+        groups: groups.map(group => ({ storeId: group.storeId, deliveryOptionId: selectedStoreMethod(group.storeId)?.id,
+          items: group.items.map(item => ({ id: item.id, price: item.price, quantity: item.quantity })) })),
+      });
+      // Keep the same key after a timeout or page reload. A changed cart gets a new key.
+      const retryStorageKey = "ondie-checkout-attempt";
+      const signature = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(requestBody))), byte => byte.toString(16).padStart(2,"0")).join("");
+      let previous: { signature?: string; key?: string } | null = null;
+      try { previous = JSON.parse(window.sessionStorage.getItem(retryStorageKey) ?? "null"); } catch { /* Ignore invalid local state. */ }
+      const requestKey = previous?.signature === signature && previous.key ? previous.key : crypto.randomUUID();
+      window.sessionStorage.setItem(retryStorageKey, JSON.stringify({ signature, key: requestKey }));
       const response = await fetch("/api/orders", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          customer: {
-            name,
-            phone,
-            address: deliveryMethod === "store_delivery" ? address : "",
-            reference: deliveryMethod === "store_delivery" ? reference : "",
-          },
-          paymentMethod: payment,
-          deliveryMethod,
-          groups: groups.map((group) => ({
-            storeId: group.storeId,
-            deliveryOptionId: selectedStoreMethod(group.storeId)?.id,
-            items: group.items.map((item) => ({
-              id: item.id,
-              name: item.name,
-              description: item.description,
-              image: item.image,
-              price: item.price,
-              quantity: item.quantity,
-            })),
-          })),
-        }),
+        headers: { "Content-Type": "application/json", "Idempotency-Key": requestKey },
+        body: requestBody,
       });
 
       if (!response.ok) {
@@ -278,6 +273,10 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
         message?: string;
       } | null;
 
+      if (!data?.orders || data.orders.length !== groups.length) {
+        throw new Error("No pudimos confirmar la respuesta. Intenta de nuevo para recuperar tu pedido.");
+      }
+      window.sessionStorage.removeItem(retryStorageKey);
       setPreparedGroups(groups);
       setPreparedOrders(data?.orders ?? []);
       setSentStoreIds([]);
@@ -300,6 +299,7 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
             : "Intenta nuevamente en unos minutos.",
       });
     } finally {
+      submissionLock.current = false;
       setIsSaving(false);
     }
   }

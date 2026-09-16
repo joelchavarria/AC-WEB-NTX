@@ -1,6 +1,6 @@
 {
   "name": "ca-web",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "engines": {
     "node": "22.x"
@@ -11,7 +11,9 @@
     "start": "next start",
     "lint": "next lint",
     "seed:emparejados": "node scripts/seed-emparejados.mjs",
-    "seed:collective": "node scripts/seed-ondie-collective.mjs"
+    "seed:collective": "node scripts/seed-ondie-collective.mjs",
+    "test:orders": "node scripts/test-order-endpoint.mjs",
+    "test:orders:db": "python3 scripts/test-checkout-security.py"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",

@@ -1,3 +1,4 @@
+import { createHmac } from "node:crypto";
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
@@ -24,22 +25,6 @@ type OrderRequest = {
   }>;
 };
 
-type ExistingOrder = {
-  id: string;
-  order_number: number;
-  store_id: string;
-  customer_phone: string;
-  delivery_address: string;
-  payment_method: string;
-  status: string;
-  created_at: string;
-  order_items: Array<{
-    product_id: string;
-    quantity: number;
-    unit_price: number;
-  }> | null;
-};
-
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -62,7 +47,7 @@ function isOrderRequest(value: unknown): value is OrderRequest {
   if (!body.customer || !text(body.customer.name, 150) ||
       !text(body.customer.phone, 30) || !text(body.customer.address, 1000) ||
       (body.customer.reference !== undefined && !text(body.customer.reference, 1000)) ||
-      !text(body.paymentMethod, 50) || !Array.isArray(body.groups) ||
+      !["cash", "transfer"].includes(body.paymentMethod) || !Array.isArray(body.groups) ||
       body.groups.length < 1 || body.groups.length > 20) return false;
   const stores = new Set<string>();
   return body.groups.every(group => {
@@ -87,6 +72,9 @@ export async function POST(request: Request) {
     return friendlyServerError();
   }
 
+  const requestId = request.headers.get("idempotency-key");
+  if (!requestId || !uuid.test(requestId)) return userError("Identificador de compra inválido.");
+  if (request.headers.get("sec-fetch-site") === "cross-site") return userError("Origen no permitido.", 403);
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin) {
     return userError("Origen no permitido.", 403);
@@ -142,133 +130,41 @@ export async function POST(request: Request) {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  const createdOrders: Array<{
-    id: string;
-    orderNumber: number;
-    storeId: string;
-  }> = [];
+  // Vercel overwrites this header. Outside Vercel use a single conservative bucket
+  // unless the hosting proxy supplies an authenticated, non-spoofable client IP.
+  const clientIp = process.env.VERCEL === "1"
+    ? request.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim() || "unknown"
+    : "local";
+  const clientKey = createHmac("sha256", serviceRoleKey).update(clientIp).digest("hex");
+  const { data: allowed, error: limitError } = await supabase.rpc("consume_checkout_rate_limit", { p_client_key: clientKey });
+  if (limitError) return friendlyServerError();
+  if (!allowed) return NextResponse.json({ error: "Demasiados intentos. Espera unos minutos antes de volver a intentar." }, {
+    status: 429, headers: { "Cache-Control": "no-store", "Retry-After": "300" },
+  });
 
-  for (const group of groups) {
-    if (!group.storeId || !group.items?.length) {
-      return userError("Tu carrito cambió. Revísalo y vuelve a intentar.");
-    }
-
-    const recentWindow = new Date(Date.now() - 5 * 60 * 1000).toISOString();
-    const { data: recentOrders, error: recentOrdersError } = await supabase
-      .from("orders")
-      .select(
-        "id, order_number, store_id, customer_phone, delivery_address, payment_method, status, created_at, order_items(product_id, quantity, unit_price)",
-      )
-      .eq("store_id", group.storeId)
-      .eq("customer_phone", phone)
-      .eq("delivery_address", address || "")
-      .eq("payment_method", paymentMethod)
-      .gte("created_at", recentWindow)
-      .order("created_at", { ascending: false })
-      .limit(5);
-
-    if (recentOrdersError) {
-      return friendlyServerError();
-    }
-
-    const normalizedItems = [...group.items]
-      .map(
-        (item) => `${item.id}:${Number(item.quantity)}:${Number(item.price)}`,
-      )
-      .sort()
-      .join("|");
-    const duplicateOrder = (recentOrders as ExistingOrder[] | null)?.find(
-      (order) => {
-        const existingItems = [...(order.order_items ?? [])]
-          .map(
-            (item) =>
-              `${item.product_id}:${Number(item.quantity)}:${Number(item.unit_price)}`,
-          )
-          .sort()
-          .join("|");
-
-        return existingItems === normalizedItems;
-      },
-    );
-
-    if (duplicateOrder) {
-      createdOrders.push({
-        id: duplicateOrder.id,
-        orderNumber: duplicateOrder.order_number,
-        storeId: group.storeId,
-      });
-      continue;
-    }
-
-    const { data: created, error: orderError } = await supabase.rpc(
-      "create_store_order_with_inventory",
-      {
-        p_store_id: group.storeId,
-        p_customer_name: name,
-        p_customer_phone: phone,
-        p_delivery_address: address || "",
-        p_delivery_reference: body.customer.reference?.trim() ?? "",
-        p_payment_method: paymentMethod,
-        p_items: group.items.map((item) => ({
-          id: item.id,
-          quantity: Number(item.quantity),
-        })),
-      },
-    );
-
-    if (orderError) {
-      const inventoryMessage = [
-        "existencias",
-        "producto",
-        "tienda",
-        "carrito",
-      ].some((word) => orderError.message.toLowerCase().includes(word));
-      return inventoryMessage
-        ? userError(orderError.message)
-        : friendlyServerError();
-    }
-
-    const order = created?.[0] as
-      { id: string; order_number: number } | undefined;
-    if (!order) return friendlyServerError();
-    const { data: store } = await supabase
-      .from("stores")
-      .select("store_json")
-      .eq("id", group.storeId)
-      .single();
-    const configuredMethods = store?.store_json?.profile_settings
-      ?.deliveryMethods as
-      Array<{ id: string; enabled: boolean; fee: string }> | undefined;
-    const configuredMethod =
-      configuredMethods?.find(
-        (method) => method.enabled && method.id === group.deliveryOptionId,
-      ) ?? configuredMethods?.find((method) => method.enabled);
-    const configuredFee = configuredMethod
-      ? Number(configuredMethod.fee) || 0
-      : Number(store?.store_json?.profile_settings?.managuaFee) || 0;
-    const shippingFee = deliveryMethod === "store_delivery" ? configuredFee : 0;
-    const { data: savedOrder, error: deliveryError } = await supabase
-      .from("orders")
-      .select("subtotal")
-      .eq("id", order.id)
-      .single();
-    if (deliveryError || !savedOrder) return friendlyServerError();
-    const { error: updateError } = await supabase
-      .from("orders")
-      .update({
-        delivery_method: deliveryMethod,
-        shipping_fee: shippingFee,
-        total: Number(savedOrder.subtotal) + shippingFee,
-      })
-      .eq("id", order.id);
-    if (updateError) return friendlyServerError();
-    createdOrders.push({
-      id: order.id,
-      orderNumber: order.order_number,
+  // Canonical payload ignores client-supplied prices, descriptions and images.
+  // One transaction covers every store, fees, inventory and retry deduplication.
+  const payload = {
+    customer: { name, phone, address: address || "", reference: body.customer.reference?.trim() ?? "" },
+    paymentMethod,
+    deliveryMethod,
+    groups: [...groups].sort((a, b) => a.storeId.localeCompare(b.storeId)).map(group => ({
       storeId: group.storeId,
-    });
+      deliveryOptionId: group.deliveryOptionId ?? null,
+      items: [...group.items].sort((a,b) => a.id.localeCompare(b.id)).map(item => ({ id: item.id, quantity: item.quantity })),
+    })),
+  };
+  const { data: createdOrders, error: orderError } = await supabase.rpc("create_checkout", {
+    p_request_id: requestId, p_payload: payload,
+  });
+  if (orderError) {
+    if (orderError.code === "P4000") return userError(orderError.message);
+    if (orderError.code === "P4090") return userError(orderError.message, 409);
+    // Never expose raw SQL or internal database errors to customers.
+    console.error("Checkout failed", { code: orderError.code });
+    return friendlyServerError();
   }
-
+  if (!Array.isArray(createdOrders) || createdOrders.length !== groups.length) return friendlyServerError();
   return NextResponse.json({
     orders: createdOrders,
     message: "Tu pedido ya está listo para enviarse por WhatsApp.",
