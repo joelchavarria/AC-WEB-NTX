@@ -75,6 +75,9 @@ export function StorefrontClient({
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("featured");
   const [activeCategory, setActiveCategory] = useState("Todos");
+  const [mobileSection, setMobileSection] = useState<
+    "categories" | "information" | "hours"
+  >("categories");
   const [favorites, setFavorites] = useState<string[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<
     NonNullable<Store["products"]>[number] | null
@@ -98,7 +101,9 @@ export function StorefrontClient({
     const byCategory =
       activeCategory === "Todos"
         ? products
-        : products.filter((product) => product.category === activeCategory);
+        : products.filter(
+            (product) => product.category?.trim() === activeCategory,
+          );
     const result = search
       ? byCategory.filter((product) =>
           [product.name, product.description, product.category].some((value) =>
@@ -300,27 +305,42 @@ export function StorefrontClient({
             Productos
           </a>
         </div>
-        <section className="store-mobile-information">
-          <div>
-            <h3>Sobre esta tienda</h3>
-            <p>
-              {store.description ??
-                store.store_json?.description ??
-                "Catálogo local disponible en ONDIE."}
-            </p>
-          </div>
-          {businessHours ? (
-            <div>
-              <h3>
-                <Clock /> Horario
-              </h3>
-              <p>{businessHours}</p>
-            </div>
-          ) : null}
-        </section>
         <div className="store-catalog-layout" id="products">
+          <nav
+            className="store-mobile-sections"
+            aria-label="Explorar la tienda"
+          >
+            <button
+              type="button"
+              className={mobileSection === "categories" ? "active" : ""}
+              onClick={() => setMobileSection("categories")}
+              aria-pressed={mobileSection === "categories"}
+            >
+              <Package /> Categorías
+            </button>
+            <button
+              type="button"
+              className={mobileSection === "information" ? "active" : ""}
+              onClick={() => setMobileSection("information")}
+              aria-pressed={mobileSection === "information"}
+            >
+              <Storefront /> Información
+            </button>
+            {businessHours ? (
+              <button
+                type="button"
+                className={mobileSection === "hours" ? "active" : ""}
+                onClick={() => setMobileSection("hours")}
+                aria-pressed={mobileSection === "hours"}
+              >
+                <Clock /> Horario
+              </button>
+            ) : null}
+          </nav>
           <aside className="catalog-sidebar">
-            <div className="catalog-filter">
+            <div
+              className={`catalog-filter catalog-categories${mobileSection === "categories" ? " mobile-active" : ""}`}
+            >
               <h3>Categorías</h3>
               {categories.map((category) => (
                 <button
@@ -339,13 +359,16 @@ export function StorefrontClient({
                     {category === "Todos"
                       ? products.length
                       : products.filter(
-                          (product) => product.category === category,
+                          (product) => product.category?.trim() === category,
                         ).length}
                   </span>
                 </button>
               ))}
             </div>
-            <div className="catalog-filter" id="information">
+            <div
+              className={`catalog-filter catalog-information${mobileSection === "information" ? " mobile-active" : ""}`}
+              id="information"
+            >
               <h3>Sobre esta tienda</h3>
               <p>
                 {store.description ??
@@ -357,12 +380,18 @@ export function StorefrontClient({
                   <MapPin /> {store.address}
                 </span>
               ) : null}
-              {businessHours ? (
-                <span className="store-detail">
-                  <Clock /> {businessHours}
-                </span>
-              ) : null}
             </div>
+            {businessHours ? (
+              <div
+                className={`catalog-filter catalog-hours${mobileSection === "hours" ? " mobile-active" : ""}`}
+                id="hours"
+              >
+                <h3>
+                  <Clock /> Horario de atención
+                </h3>
+                <p>{businessHours}</p>
+              </div>
+            ) : null}
             <div className="catalog-filter trust-filter" id="policies">
               <h3>Compra con confianza</h3>
               <span>
