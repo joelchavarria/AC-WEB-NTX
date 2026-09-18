@@ -347,90 +347,91 @@ export function StorefrontClient({
             </div>
             {visibleProducts.length ? (
               <div className="store-products-grid">
-                {visibleProducts.map((product) => (
-                  <article className="store-product-card" key={product.id}>
-                    <div className="store-product-image">
-                      {product.image ? (
-                        <Image
-                          src={product.image}
-                          alt={product.name}
-                          fill
-                          sizes="(max-width: 760px) 50vw, 25vw"
+                       {visibleProducts.map((product) => (
+                   <article className="store-product-card" key={product.id}>
+                     <div className="store-product-image">
+                       {product.image ? (
+                         <Image
+                           src={product.image}
+                           alt={product.name}
+                           fill
+                           sizes="(max-width: 760px) 50vw, 25vw"
+                         />
+                       ) : (
+                         <div className="product-image-fallback">
+                           <Package weight="duotone" />
+                         </div>
+                       )}
+                       <div className="product-badges">
+                         {product.stock < 1 ? (
+                           <span className="product-badge product-badge--out">Agotado</span>
+                         ) : product.stock <= 5 ? (
+                           <span className="product-badge product-badge--sale">Últimas {product.stock}</span>
+                         ) : null}
+                         <span className="product-badge product-badge--new">Nuevo</span>
+                       </div>
+                       <button
+                         type="button"
+                         className="product-preview-trigger"
+                         onClick={() => setSelectedProduct(product)}
+                         aria-label={`Ver detalles de ${product.name}`}
+                       />
+                       <button
+                         type="button"
+                         onClick={() =>
+                           setFavorites((current) =>
+                             current.includes(product.id)
+                               ? current.filter((id) => id !== product.id)
+                               : [...current, product.id],
+                           )
+                         }
+                         aria-label="Guardar producto"
+                         className={
+                           favorites.includes(product.id) ? "favorite" : ""
+                         }
+                       >
+                         <Heart
+                           weight={
+                             favorites.includes(product.id) ? "fill" : "regular"
+                           }
+                         />
+                       </button>
+                     </div>
+                     <div className="store-product-copy">
+                       <span className="product-store-name">{store.name}</span>
+                       <h3 className="product-title">{product.name}</h3>
+                       <div className="product-price-row">
+                         <strong>
+                           C$ {product.price.toLocaleString("es-NI")}
+                         </strong>
+                         <span
+                           className={
+                             product.stock > 2 ? "in-stock" : "low-stock"
+                           }
+                         >
+                           {product.stock > 2 ? "En stock" : "Últimas unidades"}
+                         </span>
+                       </div>
+                       <AddToCartButton
+                         product={product}
+                         storeId={store.id}
+                         storeName={store.name}
+                         storeSlug={store.slug}
                         />
-                      ) : (
-                        <div className="product-image-fallback">
-                          <Package weight="duotone" />
-                        </div>
-                      )}
-                      <button
-                        type="button"
-                        className="product-preview-trigger"
-                        onClick={() => setSelectedProduct(product)}
-                        aria-label={`Ver detalles de ${product.name}`}
-                      />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setFavorites((current) =>
-                            current.includes(product.id)
-                              ? current.filter((id) => id !== product.id)
-                              : [...current, product.id],
-                          )
-                        }
-                        aria-label="Guardar producto"
-                        className={
-                          favorites.includes(product.id) ? "favorite" : ""
-                        }
-                      >
-                        <Heart
-                          weight={
-                            favorites.includes(product.id) ? "fill" : "regular"
-                          }
-                        />
-                      </button>
-                    </div>
-                    <div className="store-product-copy">
-                      <span className="product-store-name">{store.name}</span>
-                      <button
-                        type="button"
-                        className="product-title-button"
-                        onClick={() => setSelectedProduct(product)}
-                      >
-                        {product.name}
-                      </button>
-                      <p>{product.description ?? "Producto de catálogo"}</p>
-                      <div className="product-price-row">
-                        <strong>
-                          C$ {product.price.toLocaleString("es-NI")}
-                        </strong>
-                        <span
-                          className={
-                            product.stock > 2 ? "in-stock" : "low-stock"
-                          }
-                        >
-                          {product.stock > 2 ? "En stock" : "Últimas unidades"}
-                        </span>
                       </div>
-                      <AddToCartButton
-                        product={product}
-                        storeId={store.id}
-                        storeName={store.name}
-                        storeSlug={store.slug}
-                      />
-                    </div>
-                  </article>
-                ))}
-              </div>
-            ) : (
-              <div className="catalog-empty">
-                <SlidersHorizontal />
-                <h3>No encontramos productos</h3>
-                <p>Prueba con otra búsqueda.</p>
-                <button type="button" onClick={() => setQuery("")}>
-                  Limpiar búsqueda
-                </button>
-              </div>
-            )}
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="catalog-empty">
+                  <SlidersHorizontal />
+                  <h3>No encontramos productos</h3>
+                  <p>Prueba con otra búsqueda.</p>
+                  <button type="button" onClick={() => setQuery("")}>
+                    Limpiar búsqueda
+                  </button>
+                </div>
+              )}
           </section>
         </div>
         <section className="store-benefits">
