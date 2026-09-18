@@ -6,7 +6,6 @@ import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import {
   ArrowRight,
   CheckCircle,
-  Clock,
   Heart,
   MagnifyingGlass,
   MapPin,
@@ -52,18 +51,6 @@ function getStoreAccent(store: Store) {
     : DEFAULT_ACCENT;
 }
 
-function getBusinessHours(store: Store) {
-  const structured = store.store_json?.profile_settings?.businessHours;
-  if (structured?.length)
-    return structured
-      .map(
-        (day) =>
-          `${day.label}: ${day.open ? `${day.opensAt} - ${day.closesAt}` : "Cerrado"}`,
-      )
-      .join("\n");
-  return store.store_json?.profile_settings?.hours ?? "";
-}
-
 export function StorefrontClient({
   store,
   exclusive = false,
@@ -75,9 +62,6 @@ export function StorefrontClient({
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("featured");
   const [activeCategory, setActiveCategory] = useState("Todos");
-  const [mobileSection, setMobileSection] = useState<
-    "categories" | "information" | "hours"
-  >("categories");
   const [favorites, setFavorites] = useState<string[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<
     NonNullable<Store["products"]>[number] | null
@@ -122,7 +106,6 @@ export function StorefrontClient({
     store.store_json?.heroImage ??
     store.store_json?.profile_settings?.coverImage ??
     null;
-  const businessHours = getBusinessHours(store);
   const storeAccent = getStoreAccent(store);
 
   useEffect(() => {
@@ -300,47 +283,9 @@ export function StorefrontClient({
             ) : null}
           </div>
         </section>
-        <div className="store-tabs">
-          <a href="#products" className="active">
-            Productos
-          </a>
-        </div>
         <div className="store-catalog-layout" id="products">
-          <nav
-            className="store-mobile-sections"
-            aria-label="Explorar la tienda"
-          >
-            <button
-              type="button"
-              className={mobileSection === "categories" ? "active" : ""}
-              onClick={() => setMobileSection("categories")}
-              aria-pressed={mobileSection === "categories"}
-            >
-              <Package /> Categorías
-            </button>
-            <button
-              type="button"
-              className={mobileSection === "information" ? "active" : ""}
-              onClick={() => setMobileSection("information")}
-              aria-pressed={mobileSection === "information"}
-            >
-              <Storefront /> Información
-            </button>
-            {businessHours ? (
-              <button
-                type="button"
-                className={mobileSection === "hours" ? "active" : ""}
-                onClick={() => setMobileSection("hours")}
-                aria-pressed={mobileSection === "hours"}
-              >
-                <Clock /> Horario
-              </button>
-            ) : null}
-          </nav>
-          <aside className="catalog-sidebar">
-            <div
-              className={`catalog-filter catalog-categories${mobileSection === "categories" ? " mobile-active" : ""}`}
-            >
+          <aside className="catalog-sidebar catalog-sidebar--simple">
+            <div className="catalog-filter catalog-categories">
               <h3>Categorías</h3>
               {categories.map((category) => (
                 <button
@@ -364,45 +309,6 @@ export function StorefrontClient({
                   </span>
                 </button>
               ))}
-            </div>
-            <div
-              className={`catalog-filter catalog-information${mobileSection === "information" ? " mobile-active" : ""}`}
-              id="information"
-            >
-              <h3>Sobre esta tienda</h3>
-              <p>
-                {store.description ??
-                  store.store_json?.description ??
-                  "Catálogo local disponible en ONDIE."}
-              </p>
-              {store.address ? (
-                <span className="store-detail">
-                  <MapPin /> {store.address}
-                </span>
-              ) : null}
-            </div>
-            {businessHours ? (
-              <div
-                className={`catalog-filter catalog-hours${mobileSection === "hours" ? " mobile-active" : ""}`}
-                id="hours"
-              >
-                <h3>
-                  <Clock /> Horario de atención
-                </h3>
-                <p>{businessHours}</p>
-              </div>
-            ) : null}
-            <div className="catalog-filter trust-filter" id="policies">
-              <h3>Compra con confianza</h3>
-              <span>
-                <ShieldCheck /> Datos protegidos
-              </span>
-              <span>
-                <Truck /> Entrega coordinada
-              </span>
-              <span>
-                <WhatsappLogo /> Atención directa
-              </span>
             </div>
           </aside>
           <section className="catalog-main">
