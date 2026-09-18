@@ -62,6 +62,7 @@ export function StorefrontClient({
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState("featured");
   const [activeCategory, setActiveCategory] = useState("Todos");
+  const [showCategories, setShowCategories] = useState(false);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<
     NonNullable<Store["products"]>[number] | null
@@ -284,7 +285,15 @@ export function StorefrontClient({
           </div>
         </section>
         <div className="store-catalog-layout" id="products">
-          <aside className="catalog-sidebar catalog-sidebar--simple">
+          <button
+            type="button"
+            className="category-toggle"
+            onClick={() => setShowCategories(!showCategories)}
+            aria-expanded={showCategories}
+          >
+            <Package weight="duotone" /> {showCategories ? "Ocultar categorías" : "Categorías"}
+          </button>
+          <aside className={`catalog-sidebar catalog-sidebar--simple${showCategories ? " sidebar-open" : ""}`}>
             <div className="catalog-filter catalog-categories">
               <h3>Categorías</h3>
               {categories.map((category) => (
