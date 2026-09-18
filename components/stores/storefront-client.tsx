@@ -350,35 +350,47 @@ export function StorefrontClient({
           </div>
         ) : null}
         {store.store_json?.profile_settings?.businessHours?.length ? (
-          <div className="store-cover-hours">
+          <div className="store-hours-card">
             <button
               type="button"
               className="store-hours-toggle"
               onClick={() => setShowHours(!showHours)}
               aria-expanded={showHours}
             >
-              <Clock weight="duotone" />
-              <span>{getHoursStatus(store.store_json?.profile_settings?.businessHours)}</span>
-              <span className={`hours-arrow${showHours ? " open" : ""}`}>▾</span>
+              <Clock weight="duotone" size={18} />
+              <span className="hours-toggle-text">
+                <span className="hours-toggle-label">Horario de atención</span>
+                <span className="hours-toggle-status">{getHoursStatus(store.store_json?.profile_settings?.businessHours)}</span>
+              </span>
+              <span className={`hours-arrow${showHours ? " open" : ""}`}>▲</span>
             </button>
             {showHours && (
-              <div className="store-hours-list">
+              <div className="store-hours-grid">
                 {(store.store_json?.profile_settings?.businessHours ?? []).map(
-                  (entry) => (
-                    <div
-                      key={entry.day}
-                      className={`store-hours-row${
-                        !entry.open ? " closed" : ""
-                      }`}
-                    >
-                      <span className="hours-day">{entry.label}</span>
-                      <span className="hours-time">
-                        {entry.open
-                          ? `${formatHour(entry.opensAt)} – ${formatHour(entry.closesAt)}`
-                          : "Cerrado"}
-                      </span>
-                    </div>
-                  ),
+                  (entry) => {
+                    const isToday = entry.day.toLowerCase() === new Date().toLocaleDateString("es-ES", { weekday: "long" }).toLowerCase();
+                    return (
+                      <div
+                        key={entry.day}
+                        className={`store-hours-cell${
+                          !entry.open ? " closed" : ""
+                        }${isToday ? " today" : ""}`}
+                      >
+                        <span className="cell-day">{entry.label}</span>
+                        {entry.open ? (
+                          <span className="cell-time">{formatHour(entry.opensAt)} – {formatHour(entry.closesAt)}</span>
+                        ) : (
+                          <span className="cell-time">Cerrado</span>
+                        )}
+                        {isToday && entry.open ? (
+                          <span className="cell-badge-open">Abierto</span>
+                        ) : null}
+                        {isToday && !entry.open ? (
+                          <span className="cell-badge-closed">Cerrado hoy</span>
+                        ) : null}
+                      </div>
+                    );
+                  },
                 )}
               </div>
             )}
