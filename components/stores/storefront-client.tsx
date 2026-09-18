@@ -88,6 +88,20 @@ function getHoursStatus(businessHours: Array<{ day: string; label: string; open:
     : "Cerrado";
 }
 
+function isStoreOpenNow(businessHours: Array<{ day: string; label: string; open: boolean; opensAt: string; closesAt: string }> | undefined): boolean | null {
+  if (!businessHours?.length) return null;
+  const todayEntry = getTodayEntry(businessHours);
+  if (!todayEntry) return null;
+  if (!todayEntry.open) return false;
+  const now = new Date();
+  const [openH, openM] = todayEntry.opensAt.split(":").map(Number);
+  const [closeH, closeM] = todayEntry.closesAt.split(":").map(Number);
+  const openTime = openH * 60 + openM;
+  const closeTime = closeH * 60 + closeM;
+  const current = now.getHours() * 60 + now.getMinutes();
+  return current >= openTime && current < closeTime;
+}
+
 
 
 export function StorefrontClient({
@@ -103,6 +117,8 @@ export function StorefrontClient({
   const [activeCategory, setActiveCategory] = useState("Todos");
   const [showCategories, setShowCategories] = useState(false);
   const [showHours, setShowHours] = useState(false);
+  const businessHours = store.store_json?.profile_settings?.businessHours;
+  const storeOpen = isStoreOpenNow(businessHours);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<
     NonNullable<Store["products"]>[number] | null
@@ -324,6 +340,15 @@ export function StorefrontClient({
             ) : null}
           </div>
         </section>
+        {storeOpen === false ? (
+          <div className="store-closed-banner">
+            <Clock weight="duotone" />
+            <div>
+              <strong>Tienda cerrada</strong>
+              <p>No estamos atendiendo en este momento. Visítanos en horario de atención.</p>
+            </div>
+          </div>
+        ) : null}
         {store.store_json?.profile_settings?.businessHours?.length ? (
           <div className="store-cover-hours">
             <button
@@ -489,12 +514,12 @@ export function StorefrontClient({
                            {product.stock > 2 ? "En stock" : "Últimas unidades"}
                          </span>
                        </div>
-                       <AddToCartButton
-                         product={product}
-                         storeId={store.id}
-                         storeName={store.name}
-                         storeSlug={store.slug}
-                        />
+<AddToCartButton
+                          product={product}
+                          storeId={store.id}
+                          storeName={store.name}
+                          storeSlug={store.slug}
+                         />
                       </div>
                     </article>
                   ))}
@@ -594,8 +619,8 @@ export function StorefrontClient({
                 product={selectedProduct}
                 storeId={store.id}
                 storeName={store.name}
-                storeSlug={store.slug}
-              />
+storeSlug={store.slug}
+             />
             </div>
           </section>
         </div>
