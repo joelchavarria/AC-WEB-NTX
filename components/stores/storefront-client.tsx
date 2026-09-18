@@ -65,7 +65,7 @@ function formatHour(hour: string): string {
   const parts = hour.split(":");
   if (parts.length < 2) return hour;
   const h = parseInt(parts[0], 10);
-  const m = parts[1];
+  const m = parts[1].padStart(2, "0");
   if (isNaN(h)) return hour;
   const suffix = h >= 12 ? "p.m." : "a.m.";
   const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
@@ -323,42 +323,42 @@ export function StorefrontClient({
               </a>
             ) : null}
           </div>
-          {store.store_json?.profile_settings?.businessHours?.length ? (
-            <div className="store-cover-hours">
-              <button
-                type="button"
-                className="store-hours-toggle"
-                onClick={() => setShowHours(!showHours)}
-                aria-expanded={showHours}
-              >
-                <Clock weight="duotone" />
-                <span>{getHoursStatus(store.store_json?.profile_settings?.businessHours)}</span>
-                <span className={`hours-arrow${showHours ? " open" : ""}`}>▾</span>
-              </button>
-              {showHours && (
-                <div className="store-hours-list">
-                  {(store.store_json?.profile_settings?.businessHours ?? []).map(
-                    (entry) => (
-                      <div
-                        key={entry.day}
-                        className={`store-hours-row${
-                          !entry.open ? " closed" : ""
-                        }`}
-                      >
-                        <span className="hours-day">{entry.label}</span>
-                        <span className="hours-time">
-                          {entry.open
-                            ? `${formatHour(entry.opensAt)} – ${formatHour(entry.closesAt)}`
-                            : "Cerrado"}
-                        </span>
-                      </div>
-                    ),
-                  )}
-                </div>
-              )}
-            </div>
-          ) : null}
         </section>
+        {store.store_json?.profile_settings?.businessHours?.length ? (
+          <div className="store-cover-hours">
+            <button
+              type="button"
+              className="store-hours-toggle"
+              onClick={() => setShowHours(!showHours)}
+              aria-expanded={showHours}
+            >
+              <Clock weight="duotone" />
+              <span>{getHoursStatus(store.store_json?.profile_settings?.businessHours)}</span>
+              <span className={`hours-arrow${showHours ? " open" : ""}`}>▾</span>
+            </button>
+            {showHours && (
+              <div className="store-hours-list">
+                {(store.store_json?.profile_settings?.businessHours ?? []).map(
+                  (entry) => (
+                    <div
+                      key={entry.day}
+                      className={`store-hours-row${
+                        !entry.open ? " closed" : ""
+                      }`}
+                    >
+                      <span className="hours-day">{entry.label}</span>
+                      <span className="hours-time">
+                        {entry.open
+                          ? `${formatHour(entry.opensAt)} – ${formatHour(entry.closesAt)}`
+                          : "Cerrado"}
+                      </span>
+                    </div>
+                  ),
+                )}
+              </div>
+            )}
+          </div>
+        ) : null}
         <div className="store-catalog-layout" id="products">
           <button
             type="button"

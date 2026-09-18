@@ -1956,6 +1956,7 @@ h2 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
   gap: 18px;
+  justify-items: stretch;
 }
 .store-product-card {
   overflow: hidden;
@@ -2491,33 +2492,51 @@ h2 {
   font-size: 1rem;
 }
 .catalog-empty {
-  min-height: 330px;
+  min-height: 280px;
   display: grid;
   place-items: center;
   align-content: center;
-  gap: 7px;
-  background: white;
-  border: 1px dashed #cbd4e5;
-  border-radius: 16px;
+  gap: 10px;
+  background: linear-gradient(145deg, #f8f9fc, white);
+  border: 2px dashed #cbd4e5;
+  border-radius: 20px;
   color: #77849a;
   text-align: center;
+  padding: 40px 24px;
 }
 .catalog-empty svg {
-  width: 36px;
-  height: 36px;
+  width: 48px;
+  height: 48px;
   color: var(--store-accent);
+  opacity: 0.7;
 }
 .catalog-empty h3 {
   color: #07172a;
+  font-size: 1.2rem;
+  font-weight: 800;
+  margin: 0;
+}
+.catalog-empty p {
+  margin: 0;
+  font-size: 0.88rem;
+  max-width: 320px;
 }
 .catalog-empty button {
-  margin-top: 7px;
+  margin-top: 4px;
   border: 0;
-  border-radius: 9px;
-  padding: 9px 12px;
+  border-radius: 12px;
+  padding: 11px 22px;
   background: var(--store-accent);
   color: white;
+  font-weight: 700;
+  font-size: 0.85rem;
   cursor: pointer;
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.2);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.catalog-empty button:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
 }
 .store-benefits {
   margin: 28px 0 0 264px;
@@ -2866,9 +2885,12 @@ h2 {
 }
 
 .store-cover-hours {
-  margin-top: 14px;
-  border-top: 1px solid rgba(255,255,255,.12);
-  padding-top: 10px;
+  margin-top: 16px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 12px;
+  background: white;
+  border-radius: 0 0 22px 22px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
 }
 .store-hours-toggle {
   display: flex;
@@ -2876,27 +2898,29 @@ h2 {
   justify-content: center;
   gap: 8px;
   width: 100%;
-  padding: 9px 14px;
-  border: 1px solid rgba(255,255,255,.18);
+  padding: 10px 14px;
+  border: none;
   border-radius: 11px;
-  background: rgba(255,255,255,.08);
-  color: white;
-  font-size: 0.78rem;
+  background: #f8f9fc;
+  color: #0f172a;
+  font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
   transition: background 0.2s ease;
 }
 .store-hours-toggle:hover {
-  background: rgba(255,255,255,.16);
+  background: #eef1f7;
 }
 .store-hours-toggle svg {
   width: 16px;
   height: 16px;
+  color: #2563eb;
 }
 .hours-arrow {
   font-size: 0.7rem;
   transition: transform 0.3s ease;
   margin-left: auto;
+  color: #6b7280;
 }
 .hours-arrow.open {
   transform: rotate(180deg);
@@ -2910,21 +2934,22 @@ h2 {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 5px 10px;
+  padding: 6px 12px;
   border-radius: 8px;
-  background: rgba(255,255,255,.06);
-  font-size: 0.72rem;
-  color: rgba(255,255,255,.9);
+  background: #f8f9fc;
+  font-size: 0.78rem;
+  color: #0f172a;
 }
 .store-hours-row.closed {
-  opacity: 0.45;
+  opacity: 0.5;
 }
 .hours-day {
   font-weight: 700;
   text-transform: capitalize;
 }
 .hours-time {
-  opacity: .85;
+  opacity: 0.85;
+  color: #6b7280;
 }
 
 @media (max-width: 900px) {
