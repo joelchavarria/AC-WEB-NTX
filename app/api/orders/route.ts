@@ -31,7 +31,16 @@ const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 function userError(message: string, status = 400) {
   return NextResponse.json(
     { error: message },
-    { status, headers: { "Cache-Control": "no-store" } },
+    {
+      status,
+      headers: {
+        "Cache-Control": "no-store",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Content-Security-Policy": "frame-ancestors 'none'",
+      },
+    },
   );
 }
 
@@ -194,7 +203,14 @@ export async function POST(request: Request) {
       },
       {
         status: 429,
-        headers: { "Cache-Control": "no-store", "Retry-After": "300" },
+        headers: {
+          "Cache-Control": "no-store",
+          "Retry-After": "300",
+          "X-Content-Type-Options": "nosniff",
+          "X-Frame-Options": "DENY",
+          "Referrer-Policy": "strict-origin-when-cross-origin",
+          "Content-Security-Policy": "frame-ancestors 'none'",
+        },
       },
     );
 
@@ -227,10 +243,8 @@ export async function POST(request: Request) {
     },
   );
   if (orderError) {
-    if (orderError.code === "P4000") return userError(orderError.message);
-    if (orderError.code === "P4090") return userError(orderError.message, 409);
-    // Never expose raw SQL or internal database errors to customers.
-    console.error("Checkout failed", { code: orderError.code });
+    // Never expose raw SQL, internal codes, or database messages to customers.
+    console.error("Checkout processing failed");
     return friendlyServerError();
   }
   if (!Array.isArray(createdOrders) || createdOrders.length !== groups.length)
@@ -244,15 +258,21 @@ export async function POST(request: Request) {
       { body: { orderIds } },
     );
     if (notifyError)
-      console.error("Order push notification failed", {
-        message: notifyError.message,
-      });
+      console.error("Notification delivery failed");
   }
   return NextResponse.json(
     {
-      orders: createdOrders,
+      orderIds,
       message: "Tu pedido ya está listo para enviarse por WhatsApp.",
     },
-    { headers: { "Cache-Control": "no-store" } },
+    {
+      headers: {
+        "Cache-Control": "no-store",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Content-Security-Policy": "frame-ancestors 'none'",
+      },
+    },
   );
 }

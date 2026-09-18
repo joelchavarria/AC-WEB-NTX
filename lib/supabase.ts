@@ -21,7 +21,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 export type Store = {
   id: string;
-  owner_profile_id: string;
   name: string;
   slug: string;
   category?: string | null;

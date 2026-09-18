@@ -37,13 +37,13 @@ export async function getStores() {
   const { data: stores, error } = await supabase
     .from("stores")
     .select(
-      "id, owner_profile_id, name, slug, category, description, whatsapp_phone, address, logo_url, brand_color, is_active, store_json",
+      "id, name, slug, category, description, address, logo_url, brand_color, is_active, store_json",
     )
     .eq("is_active", true)
     .order("name", { ascending: true });
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error("No se pudo cargar la lista de tiendas.");
   }
 
   const storeList = ((stores ?? []) as Store[]).map((store) => ({
@@ -86,14 +86,14 @@ export async function getStoreBySlug(slug: string) {
   const { data, error } = await supabase
     .from("stores")
     .select(
-      "id, owner_profile_id, name, slug, category, description, whatsapp_phone, address, logo_url, brand_color, is_active, store_json",
+      "id, name, slug, category, description, address, logo_url, brand_color, is_active, store_json",
     )
     .eq("slug", slug)
     .eq("is_active", true)
     .maybeSingle();
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error("No se pudo cargar la tienda.");
   }
 
   let store = data as Store | null;
@@ -104,17 +104,17 @@ export async function getStoreBySlug(slug: string) {
       .select("store_id")
       .eq("slug", normalizedSlug)
       .maybeSingle();
-    if (aliasError) throw new Error(aliasError.message);
+    if (aliasError) throw new Error("No se pudo cargar la tienda.");
     if (alias?.store_id) {
       const { data: aliasedStore, error: aliasedStoreError } = await supabase
         .from("stores")
         .select(
-          "id, owner_profile_id, name, slug, category, description, whatsapp_phone, address, logo_url, brand_color, is_active, store_json",
+          "id, name, slug, category, description, address, logo_url, brand_color, is_active, store_json",
         )
         .eq("id", alias.store_id)
         .eq("is_active", true)
         .maybeSingle();
-      if (aliasedStoreError) throw new Error(aliasedStoreError.message);
+      if (aliasedStoreError) throw new Error("No se pudo cargar la tienda.");
       store = aliasedStore as Store | null;
     }
   }
@@ -123,12 +123,12 @@ export async function getStoreBySlug(slug: string) {
     const { data: stores, error: storesError } = await supabase
       .from("stores")
       .select(
-        "id, owner_profile_id, name, slug, category, description, whatsapp_phone, address, logo_url, brand_color, is_active, store_json",
+        "id, name, slug, category, description, address, logo_url, brand_color, is_active, store_json",
       )
       .eq("is_active", true);
 
     if (storesError) {
-      throw new Error(storesError.message);
+      throw new Error("No se pudo cargar la tienda.");
     }
 
     store =

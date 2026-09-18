@@ -2848,19 +2848,104 @@ h2 {
     font-size: 1.6rem;
   }
   .store-products-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
     gap: 8px;
   }
   .store-product-image {
-    height: 200px;
+    height: 160px;
   }
-  .catalog-heading {
-    flex-direction: column;
+  .store-product-copy {
+    padding: 10px;
   }
-  .catalog-sort {
-    max-width: none;
-    width: 100%;
+  .product-title {
+    font-size: 0.82rem;
   }
+  .product-price-row strong {
+    font-size: 0.88rem;
+  }
+}
+
+.store-cover-hours {
+  margin-top: 14px;
+  border-top: 1px solid rgba(255,255,255,.12);
+  padding-top: 10px;
+}
+.store-hours-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 14px;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 11px;
+  background: rgba(255,255,255,.08);
+  color: white;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.store-hours-toggle:hover {
+  background: rgba(255,255,255,.16);
+}
+.store-hours-toggle svg {
+  width: 16px;
+  height: 16px;
+}
+.hours-arrow {
+  font-size: 0.7rem;
+  transition: transform 0.3s ease;
+  margin-left: auto;
+}
+.hours-arrow.open {
+  transform: rotate(180deg);
+}
+.store-hours-list {
+  margin-top: 8px;
+  display: grid;
+  gap: 4px;
+}
+.store-hours-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: rgba(255,255,255,.06);
+  font-size: 0.72rem;
+  color: rgba(255,255,255,.9);
+}
+.store-hours-row.closed {
+  opacity: 0.45;
+}
+.hours-day {
+  font-weight: 700;
+  text-transform: capitalize;
+}
+.hours-time {
+  opacity: .85;
+}
+
+@media (max-width: 900px) {
+  .store-cover-hours {
+    border-top-color: rgba(0,0,0,.08);
+  }
+  .store-hours-toggle {
+    background: #f8f9fc;
+    color: var(--ink);
+    border-color: #dfe4ed;
+  }
+  .store-hours-toggle:hover {
+    background: #eef1f7;
+  }
+  .store-hours-row {
+    background: #f8f9fc;
+    color: var(--ink);
+  }
+}
+
+@media (max-width: 520px) {
 }
 
 /* Dedicated ONDIE cart */

@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import {
   ArrowRight,
   CheckCircle,
+  Clock,
   Heart,
   MagnifyingGlass,
   MapPin,
@@ -57,6 +58,38 @@ function getStoreAccent(store: Store) {
     : DEFAULT_ACCENT;
 }
 
+const dayOrder = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"];
+
+function formatHour(hour: string): string {
+  if (!hour) return "";
+  const parts = hour.split(":");
+  if (parts.length < 2) return hour;
+  const h = parseInt(parts[0], 10);
+  const m = parts[1];
+  if (isNaN(h)) return hour;
+  const suffix = h >= 12 ? "p.m." : "a.m.";
+  const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${hour12}:${m} ${suffix}`;
+}
+
+function getTodayEntry(businessHours: Array<{ day: string; label: string; open: boolean; opensAt: string; closesAt: string }> | undefined) {
+  if (!businessHours?.length) return null;
+  const todayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+  const today = dayOrder[todayIdx];
+  return businessHours.find((h) => h.label.toLowerCase() === today) ?? null;
+}
+
+function getHoursStatus(businessHours: Array<{ day: string; label: string; open: boolean; opensAt: string; closesAt: string }> | undefined) {
+  if (!businessHours?.length) return "Sin horario";
+  const todayEntry = getTodayEntry(businessHours);
+  if (!todayEntry) return "Sin horario configurado";
+  return todayEntry.open
+    ? `Abierto hasta ${formatHour(todayEntry.closesAt)}`
+    : "Cerrado";
+}
+
+
+
 export function StorefrontClient({
   store,
   exclusive = false,
@@ -69,6 +102,7 @@ export function StorefrontClient({
   const [sort, setSort] = useState("featured");
   const [activeCategory, setActiveCategory] = useState("Todos");
   const [showCategories, setShowCategories] = useState(false);
+  const [showHours, setShowHours] = useState(false);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<
     NonNullable<Store["products"]>[number] | null
@@ -289,6 +323,41 @@ export function StorefrontClient({
               </a>
             ) : null}
           </div>
+          {store.store_json?.profile_settings?.businessHours?.length ? (
+            <div className="store-cover-hours">
+              <button
+                type="button"
+                className="store-hours-toggle"
+                onClick={() => setShowHours(!showHours)}
+                aria-expanded={showHours}
+              >
+                <Clock weight="duotone" />
+                <span>{getHoursStatus(store.store_json?.profile_settings?.businessHours)}</span>
+                <span className={`hours-arrow${showHours ? " open" : ""}`}>▾</span>
+              </button>
+              {showHours && (
+                <div className="store-hours-list">
+                  {(store.store_json?.profile_settings?.businessHours ?? []).map(
+                    (entry) => (
+                      <div
+                        key={entry.day}
+                        className={`store-hours-row${
+                          !entry.open ? " closed" : ""
+                        }`}
+                      >
+                        <span className="hours-day">{entry.label}</span>
+                        <span className="hours-time">
+                          {entry.open
+                            ? `${formatHour(entry.opensAt)} – ${formatHour(entry.closesAt)}`
+                            : "Cerrado"}
+                        </span>
+                      </div>
+                    ),
+                  )}
+                </div>
+              )}
+            </div>
+          ) : null}
         </section>
         <div className="store-catalog-layout" id="products">
           <button
