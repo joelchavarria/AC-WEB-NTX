@@ -39,6 +39,12 @@ const gradientColorMap: Record<string, string> = {
   "gradient-5": "#15162B",
 };
 
+function isProductNew(createdAt: string | undefined): boolean {
+  if (!createdAt) return false;
+  const ageMs = Date.now() - new Date(createdAt).getTime();
+  return ageMs / (1000 * 60 * 60) < 24;
+}
+
 function getStoreAccent(store: Store) {
   const saved =
     store.brand_color ??
@@ -362,14 +368,16 @@ export function StorefrontClient({
                            <Package weight="duotone" />
                          </div>
                        )}
-                       <div className="product-badges">
-                         {product.stock < 1 ? (
-                           <span className="product-badge product-badge--out">Agotado</span>
-                         ) : product.stock <= 5 ? (
-                           <span className="product-badge product-badge--sale">Últimas {product.stock}</span>
-                         ) : null}
-                         <span className="product-badge product-badge--new">Nuevo</span>
-                       </div>
+<div className="product-badges">
+                          {product.stock < 1 ? (
+                            <span className="product-badge product-badge--out">Agotado</span>
+                          ) : product.stock <= 5 ? (
+                            <span className="product-badge product-badge--sale">Últimas {product.stock}</span>
+                          ) : null}
+                          {isProductNew(product.created_at) ? (
+                            <span className="product-badge product-badge--new">Nuevo</span>
+                          ) : null}
+                        </div>
                        <button
                          type="button"
                          className="product-preview-trigger"

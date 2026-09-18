@@ -14,6 +14,7 @@ function mapProductsWithImages(
     stock: number;
     fulfillment_mode: string;
     is_active: boolean;
+    created_at?: string;
     product_images?: Array<{ image_url: string | null }> | null;
   }>,
 ) {
@@ -27,6 +28,7 @@ function mapProductsWithImages(
     stock: product.stock,
     fulfillment_mode: product.fulfillment_mode,
     is_active: product.is_active,
+    created_at: product.created_at,
     image: product.product_images?.[0]?.image_url ?? fallbackImage,
   }));
 }
@@ -56,7 +58,7 @@ export async function getStores() {
   const { data: products, error: productsError } = await supabase
     .from("products")
     .select(
-      "id, store_id, name, description, category, price, stock, fulfillment_mode, is_active, product_images(image_url)",
+      "id, store_id, name, description, category, price, stock, fulfillment_mode, is_active, created_at, product_images(image_url)",
     )
     .eq("is_active", true);
 

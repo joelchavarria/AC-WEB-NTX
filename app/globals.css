@@ -2014,11 +2014,11 @@ h2 {
   letter-spacing: 0.04em;
 }
 .product-badge--new {
-  background: #0f172a;
+  background: #f59e0b;
   color: white;
 }
 .product-badge--sale {
-  background: #ff6b4a;
+  background: #ef4444;
   color: white;
 }
 .product-badge--out {

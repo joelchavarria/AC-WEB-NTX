@@ -82,4 +82,5 @@ export type Product = {
   stock: number;
   fulfillment_mode: string;
   is_active: boolean;
+  created_at?: string;
 };
