@@ -249,9 +249,14 @@ export async function POST(request: Request) {
   }
   if (!Array.isArray(createdOrders) || createdOrders.length !== groups.length)
     return friendlyServerError();
-  const orderIds = createdOrders
-    .map((order: { id?: unknown }) => order.id)
-    .filter((id): id is string => typeof id === "string" && uuid.test(id));
+
+  const orders = createdOrders.filter(
+    (order: { id?: unknown }) =>
+      typeof order.id === "string" && uuid.test(order.id),
+  );
+
+  const orderIds = orders.map((o: { id: string }) => o.id);
+
   if (orderIds.length && supabase.functions?.invoke) {
     const { error: notifyError } = await supabase.functions.invoke(
       "send-order-notification",
@@ -262,7 +267,7 @@ export async function POST(request: Request) {
   }
   return NextResponse.json(
     {
-      orderIds,
+      orders,
       message: "Tu pedido ya está listo para enviarse por WhatsApp.",
     },
     {
