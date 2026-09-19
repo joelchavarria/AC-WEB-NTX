@@ -2026,6 +2026,10 @@ h2 {
   background: #94a3b8;
   color: white;
 }
+.product-badge--order {
+  background: #2563eb;
+  color: white;
+}
 .store-product-copy {
   padding: 14px 16px 18px;
 }
@@ -2357,6 +2361,10 @@ h2 {
 .low-stock {
   background: #fff0e5;
   color: #d95c13;
+}
+.order-mode {
+  background: #eff6ff;
+  color: #2563eb;
 }
 .store-product-copy .button {
   width: 100%;

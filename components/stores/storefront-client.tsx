@@ -475,7 +475,9 @@ export function StorefrontClient({
                          </div>
                        )}
 <div className="product-badges">
-                          {product.stock < 1 ? (
+                          {product.fulfillment_mode === "posterior" ? (
+                            <span className="product-badge product-badge--order">Por encargo</span>
+                          ) : product.stock < 1 ? (
                             <span className="product-badge product-badge--out">Agotado</span>
                           ) : product.stock <= 5 ? (
                             <span className="product-badge product-badge--sale">Últimas {product.stock}</span>
@@ -621,10 +623,18 @@ export function StorefrontClient({
                 </strong>
                 <span
                   className={
-                    selectedProduct.stock > 2 ? "in-stock" : "low-stock"
+                    selectedProduct.fulfillment_mode === "posterior"
+                      ? "order-mode"
+                      : selectedProduct.stock > 2
+                        ? "in-stock"
+                        : "low-stock"
                   }
                 >
-                  {selectedProduct.stock > 2 ? "En stock" : "Últimas unidades"}
+                  {selectedProduct.fulfillment_mode === "posterior"
+                    ? "Por encargo"
+                    : selectedProduct.stock > 2
+                      ? "En stock"
+                      : "Últimas unidades"}
                 </span>
               </div>
               <AddToCartButton
