@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 type OrderRequest = {
+  website?: string;
+  turnstileToken?: string;
   customer: {
     name: string;
     phone: string;
@@ -52,12 +54,15 @@ function friendlyServerError() {
 }
 
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const deviceIdPattern = /^[a-zA-Z0-9._:-]{8,128}$/;
 function isOrderRequest(value: unknown): value is OrderRequest {
   if (!value || typeof value !== "object") return false;
   const body = value as OrderRequest;
   const text = (v: unknown, max: number) =>
     typeof v === "string" && v.length <= max;
   if (
+    (body.website !== undefined && !text(body.website, 200)) ||
+    (body.turnstileToken !== undefined && !text(body.turnstileToken, 4096)) ||
     !body.customer ||
     !text(body.customer.name, 150) ||
     !text(body.customer.phone, 30) ||
@@ -104,6 +109,74 @@ function isOrderRequest(value: unknown): value is OrderRequest {
       return true;
     });
   });
+}
+
+function clientIpFor(request: Request) {
+  return process.env.VERCEL === "1"
+    ? request.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim() ||
+        "unknown"
+    : "local";
+}
+
+function deviceIdFor(request: Request) {
+  const value = request.headers.get("x-device-id")?.trim() || "missing";
+  return deviceIdPattern.test(value) ? value : "invalid";
+}
+
+function hashKey(secret: string, scope: string, value: string) {
+  return createHmac("sha256", secret).update(`${scope}:${value}`).digest("hex");
+}
+
+async function verifyTurnstile(token: string | undefined, secret: string) {
+  if (!token) return false;
+  try {
+    const response = await fetch(
+      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ secret, response: token }),
+        signal: AbortSignal.timeout(3000),
+      },
+    );
+    if (!response.ok) return false;
+    const result = (await response.json()) as { success?: boolean };
+    return result.success === true;
+  } catch {
+    return false;
+  }
+}
+
+async function recordCheckoutAbuse(
+  supabase: any,
+  eventType: "rate_limited" | "honeypot" | "bot_verification_failed",
+  clientKey: string,
+  storeCount: number,
+) {
+  console.warn("checkout_abuse", { eventType, storeCount });
+  const { error } = await supabase.rpc("record_checkout_security_event", {
+    p_event_type: eventType,
+    p_client_key: clientKey,
+    p_store_count: storeCount,
+  });
+  if (error) console.error("Could not record checkout abuse event");
+
+  const webhook = process.env.CHECKOUT_ABUSE_WEBHOOK_URL?.trim();
+  if (!webhook) return;
+  try {
+    await fetch(webhook, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        event: eventType,
+        storeCount,
+        occurredAt: new Date().toISOString(),
+      }),
+      signal: AbortSignal.timeout(2500),
+    });
+  } catch {
+    console.error("Could not deliver checkout abuse alert");
+  }
 }
 
 export async function POST(request: Request) {
@@ -180,38 +253,60 @@ export async function POST(request: Request) {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  // Vercel overwrites this header. Outside Vercel use a single conservative bucket
-  // unless the hosting proxy supplies an authenticated, non-spoofable client IP.
-  const clientIp =
-    process.env.VERCEL === "1"
-      ? request.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim() ||
-        "unknown"
-      : "local";
-  const clientKey = createHmac("sha256", serviceRoleKey)
-    .update(clientIp)
-    .digest("hex");
+  const clientIp = clientIpFor(request);
+  const deviceId = deviceIdFor(request);
+  const abuseClientKey = hashKey(
+    serviceRoleKey,
+    "abuse",
+    `${clientIp}|${deviceId}`,
+  );
+  const storeIds = [...new Set(groups.map((group) => group.storeId))];
+
+  if (body.website?.trim()) {
+    await recordCheckoutAbuse(
+      supabase,
+      "honeypot",
+      abuseClientKey,
+      storeIds.length,
+    );
+    return userError("No se pudo validar el pedido.", 403);
+  }
+
+  const turnstileSecret = process.env.TURNSTILE_SECRET_KEY?.trim();
+  if (
+    turnstileSecret &&
+    !(await verifyTurnstile(body.turnstileToken?.trim(), turnstileSecret))
+  ) {
+    await recordCheckoutAbuse(
+      supabase,
+      "bot_verification_failed",
+      abuseClientKey,
+      storeIds.length,
+    );
+    return userError("No se pudo validar el pedido.", 403);
+  }
+
+  const rateKeys = [
+    hashKey(serviceRoleKey, "ip", clientIp),
+    hashKey(serviceRoleKey, "device", deviceId),
+    ...storeIds.map((storeId) => hashKey(serviceRoleKey, "store", storeId)),
+  ];
   const { data: allowed, error: limitError } = await supabase.rpc(
-    "consume_checkout_rate_limit",
-    { p_client_key: clientKey },
+    "consume_checkout_rate_limits",
+    { p_client_keys: rateKeys },
   );
   if (limitError) return friendlyServerError();
   if (!allowed)
-    return NextResponse.json(
-      {
-        error:
-          "Demasiados intentos. Espera unos minutos antes de volver a intentar.",
-      },
-      {
-        status: 429,
-        headers: {
-          "Cache-Control": "no-store",
-          "Retry-After": "300",
-          "X-Content-Type-Options": "nosniff",
-          "X-Frame-Options": "DENY",
-          "Referrer-Policy": "strict-origin-when-cross-origin",
-          "Content-Security-Policy": "frame-ancestors 'none'",
-        },
-      },
+    await recordCheckoutAbuse(
+      supabase,
+      "rate_limited",
+      abuseClientKey,
+      storeIds.length,
+    );
+  if (!allowed)
+    return userError(
+      "Demasiados intentos. Espera unos minutos antes de volver a intentar.",
+      429,
     );
 
   // Canonical payload ignores client-supplied prices, descriptions and images.
@@ -262,8 +357,7 @@ export async function POST(request: Request) {
       "send-order-notification",
       { body: { orderIds } },
     );
-    if (notifyError)
-      console.error("Notification delivery failed");
+    if (notifyError) console.error("Notification delivery failed");
   }
   return NextResponse.json(
     {

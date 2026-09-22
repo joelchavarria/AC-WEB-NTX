@@ -2083,6 +2083,10 @@ h2 {
   background: #fef3c7;
   color: #d97706;
 }
+.product-price-row .out-of-stock {
+  background: #e2e8f0;
+  color: #64748b;
+}
 .store-product-copy .button {
   width: 100%;
   border-radius: 10px;
@@ -2361,6 +2365,10 @@ h2 {
 .low-stock {
   background: #fff0e5;
   color: #d95c13;
+}
+.out-of-stock {
+  background: #eef2f7;
+  color: #64748b;
 }
 .order-mode {
   background: #eff6ff;

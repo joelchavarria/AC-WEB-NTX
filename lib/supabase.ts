@@ -79,7 +79,7 @@ export type Product = {
   image?: string;
   thumbnail?: string;
   stock: number;
-  fulfillment_mode: string;
+  fulfillment_mode: "inmediato" | "encargo" | string;
   is_active: boolean;
   created_at?: string;
 };

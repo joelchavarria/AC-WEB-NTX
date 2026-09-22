@@ -65,6 +65,15 @@ type OrderGroup = { storeId: string; storeName: string; items: CartItem[] };
 type PreparedOrder = { id: string; orderNumber: number; storeId: string };
 type SentReceipt = { orderNumber: number; storeName: string; sentAt: number };
 const LAST_SENT_ORDER_KEY = "ondie-last-sent-order";
+const CHECKOUT_DEVICE_ID_KEY = "ondie-checkout-device-id";
+
+function getCheckoutDeviceId() {
+  const current = window.localStorage.getItem(CHECKOUT_DEVICE_ID_KEY);
+  if (current) return current;
+  const deviceId = crypto.randomUUID();
+  window.localStorage.setItem(CHECKOUT_DEVICE_ID_KEY, deviceId);
+  return deviceId;
+}
 
 export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
   const { showNotice } = useNoticeCenter();
@@ -244,22 +253,59 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
 
     try {
       const requestBody = JSON.stringify({
-        customer: { name, phone, address: deliveryMethod === "store_delivery" ? address : "", reference: deliveryMethod === "store_delivery" ? reference : "" },
+        website: "",
+        customer: {
+          name,
+          phone,
+          address: deliveryMethod === "store_delivery" ? address : "",
+          reference: deliveryMethod === "store_delivery" ? reference : "",
+        },
         paymentMethod: payment,
         deliveryMethod,
-        groups: groups.map(group => ({ storeId: group.storeId, deliveryOptionId: selectedStoreMethod(group.storeId)?.id,
-          items: group.items.map(item => ({ id: item.id, price: item.price, quantity: item.quantity })) })),
+        groups: groups.map((group) => ({
+          storeId: group.storeId,
+          deliveryOptionId: selectedStoreMethod(group.storeId)?.id,
+          items: group.items.map((item) => ({
+            id: item.id,
+            price: item.price,
+            quantity: item.quantity,
+          })),
+        })),
       });
       // Keep the same key after a timeout or page reload. A changed cart gets a new key.
       const retryStorageKey = "ondie-checkout-attempt";
-      const signature = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(requestBody))), byte => byte.toString(16).padStart(2,"0")).join("");
+      const signature = Array.from(
+        new Uint8Array(
+          await crypto.subtle.digest(
+            "SHA-256",
+            new TextEncoder().encode(requestBody),
+          ),
+        ),
+        (byte) => byte.toString(16).padStart(2, "0"),
+      ).join("");
       let previous: { signature?: string; key?: string } | null = null;
-      try { previous = JSON.parse(window.sessionStorage.getItem(retryStorageKey) ?? "null"); } catch { /* Ignore invalid local state. */ }
-      const requestKey = previous?.signature === signature && previous.key ? previous.key : crypto.randomUUID();
-      window.sessionStorage.setItem(retryStorageKey, JSON.stringify({ signature, key: requestKey }));
+      try {
+        previous = JSON.parse(
+          window.sessionStorage.getItem(retryStorageKey) ?? "null",
+        );
+      } catch {
+        /* Ignore invalid local state. */
+      }
+      const requestKey =
+        previous?.signature === signature && previous.key
+          ? previous.key
+          : crypto.randomUUID();
+      window.sessionStorage.setItem(
+        retryStorageKey,
+        JSON.stringify({ signature, key: requestKey }),
+      );
       const response = await fetch("/api/orders", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Idempotency-Key": requestKey },
+        headers: {
+          "Content-Type": "application/json",
+          "Idempotency-Key": requestKey,
+          "X-Device-ID": getCheckoutDeviceId(),
+        },
         body: requestBody,
       });
 
@@ -274,7 +320,9 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
       } | null;
 
       if (!data?.orders || data.orders.length !== groups.length) {
-        throw new Error("No pudimos confirmar la respuesta. Intenta de nuevo para recuperar tu pedido.");
+        throw new Error(
+          "No pudimos confirmar la respuesta. Intenta de nuevo para recuperar tu pedido.",
+        );
       }
       window.sessionStorage.removeItem(retryStorageKey);
       setPreparedGroups(groups);
@@ -772,7 +820,11 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
                   </Link>
                 ) : null}
                 <p className="privacy-order">
-                  <LockKey /> Tus datos se usan para gestionar tu pedido conforme a nuestra <Link href="/privacidad">Política de privacidad</Link>. Consulta los <Link href="/terminos">Términos y condiciones</Link>.
+                  <LockKey /> Tus datos se usan para gestionar tu pedido
+                  conforme a nuestra{" "}
+                  <Link href="/privacidad">Política de privacidad</Link>.
+                  Consulta los{" "}
+                  <Link href="/terminos">Términos y condiciones</Link>.
                 </p>
               </section>
             </aside>

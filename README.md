@@ -60,7 +60,7 @@ Incluye:
 - `description text`
 - `price numeric`
 - `stock int`
-- `fulfillment_mode text` - `inmediato` o `posterior`
+- `fulfillment_mode text` - `inmediato` o `encargo`
 - `is_active boolean`
 - `created_at timestamp`
 
@@ -98,6 +98,18 @@ npm run build     # Build de producción
 npm run lint      # Linting
 npm run dev       # Modo desarrollo
 ```
+
+### Prueba de aislamiento entre tiendas
+
+`npm run test:tenant` requiere un proyecto Supabase de staging y dos cuentas
+reales de propietario. Configura `TENANT_A_EMAIL`, `TENANT_A_PASSWORD`,
+`TENANT_B_EMAIL`, `TENANT_B_PASSWORD` y los IDs de fixtures B
+(`TENANT_TEST_STORE_B_ID`, `TENANT_TEST_PRODUCT_B_ID`,
+`TENANT_TEST_ORDER_B_ID`, `TENANT_TEST_ORDER_ITEM_B_ID`,
+`TENANT_TEST_CUSTOMER_B_ID`, `TENANT_TEST_IMAGE_B_ID`,
+`TENANT_TEST_PUSH_TOKEN_B_ID`), además de
+`TENANT_TEST_ALLOW_WRITES=1`. El script valida lecturas, escrituras, funciones
+privilegiadas y Realtime; solo debe ejecutarse contra datos de prueba.
 
 ## 📁 .gitignore
 

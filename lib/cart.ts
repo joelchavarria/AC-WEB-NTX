@@ -1,4 +1,5 @@
 import type { Product } from "@/lib/supabase";
+import { normalizeFulfillmentMode } from "@/lib/product-availability";
 
 export type CartItem = Product & {
   storeId: string;
@@ -59,7 +60,9 @@ type StoredCart = {
 };
 
 function maxQuantity(item: CartItem) {
-  return item.fulfillment_mode === "inmediato" ? Math.max(0, item.stock) : 99;
+  return normalizeFulfillmentMode(item.fulfillment_mode) === "inmediato"
+    ? Math.max(0, item.stock)
+    : 99;
 }
 
 export function readCart() {
@@ -76,7 +79,16 @@ export function readCart() {
       window.localStorage.removeItem(CART_KEY);
       return [];
     }
-    return saved.items.filter((item) => item?.id && item?.storeId && item.quantity > 0);
+    return saved.items.filter(
+      (item) =>
+        item?.id &&
+        item?.storeId &&
+        item?.storeName &&
+        Number.isInteger(item.quantity) &&
+        item.quantity > 0 &&
+        Number.isFinite(item.price) &&
+        item.price >= 0,
+    );
   } catch {
     window.localStorage.removeItem(CART_KEY);
     return [];

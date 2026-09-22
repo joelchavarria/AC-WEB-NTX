@@ -6,3 +6,5 @@ npm-debug.log*
 tsconfig.tsbuildinfo
 
 supabase/.temp/
+.vercel
+.env*

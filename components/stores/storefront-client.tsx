@@ -29,6 +29,7 @@ import {
 } from "@/lib/cart";
 import type { Store } from "@/lib/supabase";
 import { toWhatsAppNumber } from "@/lib/whatsapp";
+import { getProductAvailability } from "@/lib/product-availability";
 
 const DEFAULT_ACCENT = "#142fe3";
 const gradientColorMap: Record<string, string> = {
@@ -439,8 +440,8 @@ export function StorefrontClient({
                 <h2>Productos de {store.name}</h2>
                 <p>
                   {visibleProducts.length}{" "}
-                  {visibleProducts.length === 1 ? "producto" : "productos"}{" "}
-                  disponibles
+                  {visibleProducts.length === 1 ? "producto" : "productos"} en
+                  el catálogo
                 </p>
               </div>
               <label className="catalog-sort">
@@ -475,13 +476,19 @@ export function StorefrontClient({
                          </div>
                        )}
 <div className="product-badges">
-                          {product.fulfillment_mode === "posterior" ? (
-                            <span className="product-badge product-badge--order">Por encargo</span>
-                          ) : product.stock < 1 ? (
-                            <span className="product-badge product-badge--out">Agotado</span>
-                          ) : product.stock <= 5 ? (
-                            <span className="product-badge product-badge--sale">Últimas {product.stock}</span>
-                          ) : null}
+                          {(() => {
+                            const availability = getProductAvailability(
+                              product.stock,
+                              product.fulfillment_mode,
+                            );
+                            return availability.badgeClass ? (
+                              <span
+                                className={`product-badge ${availability.badgeClass}`}
+                              >
+                                {availability.label}
+                              </span>
+                            ) : null;
+                          })()}
                           {isProductNew(product.created_at) ? (
                             <span className="product-badge product-badge--new">Nuevo</span>
                           ) : null}
@@ -521,11 +528,15 @@ export function StorefrontClient({
                            C$ {product.price.toLocaleString("es-NI")}
                          </strong>
                          <span
-                           className={
-                             product.stock > 2 ? "in-stock" : "low-stock"
-                           }
+                           className={getProductAvailability(
+                             product.stock,
+                             product.fulfillment_mode,
+                           ).statusClass}
                          >
-                           {product.stock > 2 ? "En stock" : "Últimas unidades"}
+                           {getProductAvailability(
+                             product.stock,
+                             product.fulfillment_mode,
+                           ).label}
                          </span>
                        </div>
 <AddToCartButton
@@ -622,19 +633,15 @@ export function StorefrontClient({
                   C$ {selectedProduct.price.toLocaleString("es-NI")}
                 </strong>
                 <span
-                  className={
-                    selectedProduct.fulfillment_mode === "posterior"
-                      ? "order-mode"
-                      : selectedProduct.stock > 2
-                        ? "in-stock"
-                        : "low-stock"
-                  }
+                  className={getProductAvailability(
+                    selectedProduct.stock,
+                    selectedProduct.fulfillment_mode,
+                  ).statusClass}
                 >
-                  {selectedProduct.fulfillment_mode === "posterior"
-                    ? "Por encargo"
-                    : selectedProduct.stock > 2
-                      ? "En stock"
-                      : "Últimas unidades"}
+                  {getProductAvailability(
+                    selectedProduct.stock,
+                    selectedProduct.fulfillment_mode,
+                  ).label}
                 </span>
               </div>
               <AddToCartButton

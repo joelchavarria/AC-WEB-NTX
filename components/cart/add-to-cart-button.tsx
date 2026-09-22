@@ -3,6 +3,7 @@
 import { Minus, Plus, ShoppingCartSimple } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { addToCart, readCart, subscribeToCart, updateCartQuantity } from "@/lib/cart";
+import { getProductAvailability, normalizeFulfillmentMode } from "@/lib/product-availability";
 import type { Product } from "@/lib/supabase";
 
 export function AddToCartButton({
@@ -17,7 +18,10 @@ export function AddToCartButton({
   storeSlug?: string;
 }) {
   const [quantity, setQuantity] = useState(0);
-  const unavailable = product.fulfillment_mode === "inmediato" && product.stock < 1;
+  const availability = getProductAvailability(
+    product.stock,
+    product.fulfillment_mode,
+  );
 
   useEffect(() => {
     const sync = () => setQuantity(readCart().find((item) => item.id === product.id && item.storeId === storeId)?.quantity ?? 0);
@@ -28,19 +32,19 @@ export function AddToCartButton({
   if (quantity > 0) return <div className="product-quantity-control" aria-label={`Cantidad de ${product.name}`}>
     <button type="button" aria-label="Reducir cantidad" onClick={() => updateCartQuantity(product.id, storeId, quantity - 1)}><Minus weight="bold" /></button>
     <span><small>En carrito</small><strong>{quantity}</strong></span>
-    <button type="button" aria-label="Aumentar cantidad" disabled={product.fulfillment_mode === "inmediato" && quantity >= product.stock} onClick={() => addToCart({ ...product, storeId, storeName, storeSlug, quantity: 1 })}><Plus weight="bold" /></button>
+    <button type="button" aria-label="Aumentar cantidad" disabled={normalizeFulfillmentMode(product.fulfillment_mode) === "inmediato" && quantity >= product.stock} onClick={() => addToCart({ ...product, storeId, storeName, storeSlug, quantity: 1 })}><Plus weight="bold" /></button>
   </div>;
 
   return (
     <button
       className="button add-to-cart-button"
-      disabled={unavailable}
+      disabled={!availability.canAdd}
       onClick={() => {
         addToCart({ ...product, storeId, storeName, storeSlug, quantity: 1 });
       }}
       aria-live="polite"
     >
-      {unavailable ? "Agotado" : <><span className="cart-button-icon"><ShoppingCartSimple weight="bold" /></span><span>Agregar al carrito</span></>}
+      {!availability.canAdd ? "Agotado" : <><span className="cart-button-icon"><ShoppingCartSimple weight="bold" /></span><span>{availability.kind === "on-demand" ? "Pedir por encargo" : "Agregar al carrito"}</span></>}
     </button>
   );
 }

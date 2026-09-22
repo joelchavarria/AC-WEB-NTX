@@ -1,7 +1,107 @@
 import { supabase, type Store } from "@/lib/supabase";
 import { normalizeStoreSlug } from "@/lib/store-slug";
+import { normalizeFulfillmentMode } from "@/lib/product-availability";
 const fallbackImage =
   "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=600&h=600&fit=crop&auto=format";
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object";
+}
+
+function stringValue(value: unknown) {
+  return typeof value === "string" && value.trim() ? value : undefined;
+}
+
+function sanitizePublicStoreJson(value: unknown): Store["store_json"] {
+  if (!isRecord(value)) return {};
+  const profile = isRecord(value.profile_settings)
+    ? value.profile_settings
+    : {};
+  const businessHours = Array.isArray(profile.businessHours)
+    ? profile.businessHours
+        .filter(isRecord)
+        .map((entry) => ({
+          day: stringValue(entry.day) ?? "",
+          label: stringValue(entry.label) ?? "",
+          open: entry.open === true,
+          opensAt: stringValue(entry.opensAt) ?? "",
+          closesAt: stringValue(entry.closesAt) ?? "",
+        }))
+        .filter((entry) => entry.day && entry.label)
+    : undefined;
+  const deliveryMethods = Array.isArray(profile.deliveryMethods)
+    ? profile.deliveryMethods
+        .filter(isRecord)
+        .map((method) => ({
+          id: stringValue(method.id) ?? "",
+          name: stringValue(method.name) ?? "",
+          enabled: method.enabled === true,
+          fee: stringValue(method.fee) ?? "0",
+        }))
+        .filter((method) => method.id && method.name)
+    : undefined;
+  const paymentMethods = Array.isArray(value.paymentMethods)
+    ? value.paymentMethods.filter(
+        (method): method is string => typeof method === "string",
+      )
+    : undefined;
+
+  return {
+    description: stringValue(value.description),
+    accent: stringValue(value.accent),
+    heroImage: stringValue(value.heroImage),
+    paymentMethods,
+    // Legacy JSON may contain account numbers. Public payment accounts are
+    // attached only from the RLS-filtered table below.
+    paymentAccounts: [],
+    profile_settings: {
+      brandColor: stringValue(profile.brandColor),
+      hours: stringValue(profile.hours),
+      coverImage: stringValue(profile.coverImage),
+      managuaFee: stringValue(profile.managuaFee),
+      pickupEnabled: profile.pickupEnabled === true,
+      pickupAddress: stringValue(profile.pickupAddress),
+      businessHours,
+      deliveryMethods,
+    },
+  };
+}
+
+async function attachPublicPaymentAccounts<T extends Store>(stores: T[]) {
+  const ids = stores.map((store) => store.id);
+  if (!ids.length) return stores;
+  const { data, error } = await supabase
+    .from("store_bank_accounts")
+    .select(
+      "store_id, bank_name, account_holder, account_number, account_type, currency",
+    )
+    .in("store_id", ids)
+    .eq("is_public", true)
+    .order("created_at", { ascending: true });
+  if (error)
+    throw new Error("No se pudieron cargar los métodos de pago públicos.");
+  const accountsByStore = new Map<
+    string,
+    NonNullable<Store["store_json"]>["paymentAccounts"]
+  >();
+  for (const account of data ?? []) {
+    const accounts = accountsByStore.get(account.store_id) ?? [];
+    accounts.push({
+      bankName: account.bank_name,
+      accountHolder: account.account_holder ?? undefined,
+      accountNumber: account.account_number,
+      accountType: account.account_type ?? undefined,
+    });
+    accountsByStore.set(account.store_id, accounts);
+  }
+  return stores.map((store) => ({
+    ...store,
+    store_json: {
+      ...sanitizePublicStoreJson(store.store_json),
+      paymentAccounts: accountsByStore.get(store.id) ?? [],
+    },
+  }));
+}
 
 function mapProductsWithImages(
   products: Array<{
@@ -12,7 +112,7 @@ function mapProductsWithImages(
     category?: string | null;
     price: number | string;
     stock: number;
-    fulfillment_mode: string;
+    fulfillment_mode: string | null;
     is_active: boolean;
     created_at?: string;
     product_images?: Array<{ image_url: string | null }> | null;
@@ -26,7 +126,7 @@ function mapProductsWithImages(
     category: product.category ?? null,
     price: Number(product.price),
     stock: product.stock,
-    fulfillment_mode: product.fulfillment_mode,
+    fulfillment_mode: normalizeFulfillmentMode(product.fulfillment_mode),
     is_active: product.is_active,
     created_at: product.created_at,
     image: product.product_images?.[0]?.image_url ?? fallbackImage,
@@ -46,10 +146,12 @@ export async function getStores() {
     throw new Error("No se pudo cargar la lista de tiendas.");
   }
 
-  const storeList = ((stores ?? []) as Store[]).map((store) => ({
-    ...store,
-    slug: normalizeStoreSlug(store.slug || store.name),
-  }));
+  const storeList = await attachPublicPaymentAccounts(
+    ((stores ?? []) as Store[]).map((store) => ({
+      ...store,
+      slug: normalizeStoreSlug(store.slug || store.name),
+    })),
+  );
 
   if (storeList.length === 0) {
     return storeList;
@@ -143,6 +245,8 @@ export async function getStoreBySlug(slug: string) {
   if (!store) {
     return null;
   }
+
+  store = (await attachPublicPaymentAccounts([store]))[0] ?? store;
 
   const { data: products, error: productsError } = await supabase
     .from("products")

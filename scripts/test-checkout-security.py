@@ -133,7 +133,7 @@ items=json.dumps([{'id':'10000000-0000-0000-0000-000000000001','quantity':2}])
 owner('select replace_order_items(%s,%s::jsonb)'%(literal(order),literal(items)))
 assert scalar('select stock from products where name=\'Producto\'')=='1'
 assert scalar('select total from orders')=='270.00'
-sql("update products set fulfillment_mode='preventa' where name='Producto'")
+sql("update products set fulfillment_mode='encargo' where name='Producto'")
 owner("update orders set status='cancelled' where id=%s"%literal(order))
 assert scalar('select stock from products where name=\'Producto\'')=='3'
 print('PASS: editing preserves inventory and totals; changed fulfillment mode does not lose reservation')
