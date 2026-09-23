@@ -26,6 +26,7 @@ import {
   removeFromCart,
   subscribeToCart,
   updateCartQuantity,
+  variantKey,
   writeCart,
   type CartItem,
   type ExclusiveStoreContext,
@@ -149,7 +150,7 @@ export function CartPageClient() {
                     {group.items.map((item) => (
                       <article
                         className="cart-line-item"
-                        key={`${item.storeId}-${item.id}`}
+                        key={`${item.storeId}-${item.id}-${variantKey(item.variantOptions)}`}
                       >
                         <div className="cart-item-image">
                           {item.image ? (
@@ -166,6 +167,13 @@ export function CartPageClient() {
                         <div className="cart-item-copy">
                           <h3>{item.name}</h3>
                           <p>{item.description ?? "Producto de catálogo"}</p>
+                          {item.variantOptions && Object.keys(item.variantOptions).length ? (
+                            <div className="cart-item-variants">
+                              {Object.entries(item.variantOptions).map(([name, value]) => (
+                                <span key={name}>{name}: {value}</span>
+                              ))}
+                            </div>
+                          ) : null}
                           <strong>
                             C$ {item.price.toLocaleString("es-NI")}
                           </strong>
@@ -178,6 +186,7 @@ export function CartPageClient() {
                                 item.id,
                                 item.storeId,
                                 item.quantity - 1,
+                                item.variantOptions,
                               )
                             }
                           >
@@ -191,6 +200,7 @@ export function CartPageClient() {
                                 item.id,
                                 item.storeId,
                                 item.quantity + 1,
+                                item.variantOptions,
                               )
                             }
                           >
@@ -204,7 +214,7 @@ export function CartPageClient() {
                         <button
                           className="remove-line"
                           aria-label={`Eliminar ${item.name}`}
-                          onClick={() => removeFromCart(item.id, item.storeId)}
+                          onClick={() => removeFromCart(item.id, item.storeId, item.variantOptions)}
                         >
                           <X />
                         </button>

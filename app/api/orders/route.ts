@@ -23,6 +23,7 @@ type OrderRequest = {
       image?: string;
       price: number;
       quantity: number;
+      variantOptions?: Record<string, string>;
     }>;
   }>;
 };
@@ -60,6 +61,13 @@ function isOrderRequest(value: unknown): value is OrderRequest {
   const body = value as OrderRequest;
   const text = (v: unknown, max: number) =>
     typeof v === "string" && v.length <= max;
+  const validVariantOptions = (value: unknown) =>
+    value === undefined ||
+    (value !== null && typeof value === "object" && !Array.isArray(value) &&
+      Object.entries(value).length <= 12 &&
+      Object.entries(value).every(
+        ([key, option]) => text(key, 80) && text(option, 120),
+      ));
   if (
     (body.website !== undefined && !text(body.website, 200)) ||
     (body.turnstileToken !== undefined && !text(body.turnstileToken, 4096)) ||
@@ -102,7 +110,8 @@ function isOrderRequest(value: unknown): value is OrderRequest {
         item.quantity > 999 ||
         typeof item.price !== "number" ||
         !Number.isFinite(item.price) ||
-        item.price < 0
+        item.price < 0 ||
+        !validVariantOptions(item.variantOptions)
       )
         return false;
       products.add(item.id);
@@ -309,7 +318,8 @@ export async function POST(request: Request) {
       429,
     );
 
-  // Canonical payload ignores client-supplied prices, descriptions and images.
+  // Canonical payload ignores client-supplied prices, descriptions and images,
+  // but carries selected product options so the order retains color and size.
   // One transaction covers every store, fees, inventory and retry deduplication.
   const payload = {
     customer: {
@@ -327,7 +337,11 @@ export async function POST(request: Request) {
         deliveryOptionId: group.deliveryOptionId ?? null,
         items: [...group.items]
           .sort((a, b) => a.id.localeCompare(b.id))
-          .map((item) => ({ id: item.id, quantity: item.quantity })),
+          .map((item) => ({
+            id: item.id,
+            quantity: item.quantity,
+            variant_options: item.variantOptions ?? {},
+          })),
       })),
   };
   const { data: createdOrders, error: orderError } = await supabase.rpc(

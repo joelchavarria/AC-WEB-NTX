@@ -77,9 +77,23 @@ export type Product = {
   description?: string | null;
   category?: string | null;
   image?: string;
+  images?: ProductImage[];
   thumbnail?: string;
   stock: number;
   fulfillment_mode: "inmediato" | "encargo" | string;
   is_active: boolean;
   created_at?: string;
+  variant_options?: ProductVariantGroup[];
+};
+
+export type ProductImage = {
+  id?: string;
+  image_url: string;
+  sort_order?: number;
+  alt_text?: string | null;
+};
+
+export type ProductVariantGroup = {
+  name: string;
+  values: string[];
 };

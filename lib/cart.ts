@@ -6,6 +6,7 @@ export type CartItem = Product & {
   storeName: string;
   storeSlug?: string;
   quantity: number;
+  variantOptions?: Record<string, string>;
 };
 
 const CART_KEY = "ca-web-cart";
@@ -65,6 +66,10 @@ function maxQuantity(item: CartItem) {
     : 99;
 }
 
+export function variantKey(options?: Record<string, string>) {
+  return JSON.stringify(Object.entries(options ?? {}).sort(([a], [b]) => a.localeCompare(b)));
+}
+
 export function readCart() {
   if (typeof window === "undefined") {
     return [] as CartItem[];
@@ -108,7 +113,7 @@ export function writeCart(items: CartItem[]) {
 export function addToCart(item: CartItem) {
   const exclusiveStore = readExclusiveStoreContext();
   const cart = exclusiveStore && exclusiveStore.storeId !== item.storeId ? [] : readCart();
-  const existing = cart.find((entry) => entry.id === item.id && entry.storeId === item.storeId);
+  const existing = cart.find((entry) => entry.id === item.id && entry.storeId === item.storeId && variantKey(entry.variantOptions) === variantKey(item.variantOptions));
 
   if (existing) {
     existing.quantity = Math.min(existing.quantity + item.quantity, maxQuantity(item));
@@ -129,10 +134,10 @@ export function removeStoreFromCart(storeId: string) {
   writeCart(readCart().filter((item) => item.storeId !== storeId));
 }
 
-export function updateCartQuantity(productId: string, storeId: string, quantity: number) {
+export function updateCartQuantity(productId: string, storeId: string, quantity: number, variantOptions?: Record<string, string>) {
   const cart = readCart();
   const next = cart.reduce<CartItem[]>((result, item) => {
-    const updated = item.id === productId && item.storeId === storeId
+    const updated = item.id === productId && item.storeId === storeId && variantKey(item.variantOptions) === variantKey(variantOptions)
       ? { ...item, quantity: Math.min(Math.max(0, quantity), maxQuantity(item)) }
       : item;
     if (updated.quantity > 0) result.push(updated);
@@ -141,8 +146,8 @@ export function updateCartQuantity(productId: string, storeId: string, quantity:
   writeCart(next);
 }
 
-export function removeFromCart(productId: string, storeId: string) {
-  writeCart(readCart().filter((item) => !(item.id === productId && item.storeId === storeId)));
+export function removeFromCart(productId: string, storeId: string, variantOptions?: Record<string, string>) {
+  writeCart(readCart().filter((item) => !(item.id === productId && item.storeId === storeId && variantKey(item.variantOptions) === variantKey(variantOptions))));
 }
 
 export function subscribeToCart(callback: () => void) {

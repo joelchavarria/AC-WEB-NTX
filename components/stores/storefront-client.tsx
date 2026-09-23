@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import {
   ArrowRight,
+  CaretLeft,
+  CaretRight,
   CheckCircle,
   Clock,
   Heart,
@@ -32,6 +34,7 @@ import { toWhatsAppNumber } from "@/lib/whatsapp";
 import { getProductAvailability } from "@/lib/product-availability";
 
 const DEFAULT_ACCENT = "#142fe3";
+const PRODUCTS_PER_PAGE = 12;
 const gradientColorMap: Record<string, string> = {
   "gradient-0": "#3532FF",
   "gradient-1": "#FF6852",
@@ -124,6 +127,11 @@ export function StorefrontClient({
   const [selectedProduct, setSelectedProduct] = useState<
     NonNullable<Store["products"]>[number] | null
   >(null);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [selectedVariants, setSelectedVariants] = useState<
+    Record<string, string>
+  >({});
+  const [currentPage, setCurrentPage] = useState(1);
   const [themeApplying, setThemeApplying] = useState(exclusive);
   const categories = useMemo(
     () => [
@@ -158,6 +166,27 @@ export function StorefrontClient({
     if (sort === "stock") result.sort((a, b) => b.stock - a.stock);
     return result;
   }, [activeCategory, products, query, sort]);
+  const totalPages = Math.max(
+    1,
+    Math.ceil(visibleProducts.length / PRODUCTS_PER_PAGE),
+  );
+  const pageForDisplay = Math.min(currentPage, totalPages);
+  const paginatedProducts = useMemo(() => {
+    const start = (Math.min(currentPage, totalPages) - 1) * PRODUCTS_PER_PAGE;
+    return visibleProducts.slice(start, start + PRODUCTS_PER_PAGE);
+  }, [currentPage, totalPages, visibleProducts]);
+  const updateQuery = (value: string) => {
+    setQuery(value);
+    setCurrentPage(1);
+  };
+  const updateCategory = (category: string) => {
+    setActiveCategory(category);
+    setCurrentPage(1);
+  };
+  const updateSort = (value: string) => {
+    setSort(value);
+    setCurrentPage(1);
+  };
   const whatsappNumber = toWhatsAppNumber(store.whatsapp_phone);
   const whatsappUrl = whatsappNumber ? `https://wa.me/${whatsappNumber}` : null;
   const coverImage =
@@ -165,6 +194,35 @@ export function StorefrontClient({
     store.store_json?.profile_settings?.coverImage ??
     null;
   const storeAccent = getStoreAccent(store);
+  const storeDescription =
+    store.description?.trim() || store.store_json?.description?.trim() || null;
+  const selectedImages = selectedProduct?.images?.length
+    ? selectedProduct.images
+    : selectedProduct?.image
+      ? [{ image_url: selectedProduct.image, alt_text: null }]
+      : [];
+  const selectedImage = selectedImages[selectedImageIndex] ?? selectedImages[0];
+  const variantGroups = (selectedProduct?.variant_options ?? []).filter(
+    (group) => group.name.trim() && group.values.length,
+  );
+  const variantsReady = variantGroups.every((group) =>
+    Boolean(selectedVariants[group.name]),
+  );
+  const missingVariantGroups = variantGroups.filter(
+    (group) => !selectedVariants[group.name],
+  );
+  const variantSelectionSummary = variantGroups
+    .filter((group) => selectedVariants[group.name])
+    .map((group) => `${group.name}: ${selectedVariants[group.name]}`)
+    .join(" · ");
+
+  const openProductDetails = (
+    product: NonNullable<Store["products"]>[number],
+  ) => {
+    setSelectedProduct(product);
+    setSelectedImageIndex(0);
+    setSelectedVariants({});
+  };
 
   useEffect(() => {
     if (exclusive) {
@@ -210,6 +268,9 @@ export function StorefrontClient({
   useEffect(() => {
     if (!selectedProduct) return;
 
+    setSelectedImageIndex(0);
+    setSelectedVariants({});
+
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") setSelectedProduct(null);
     };
@@ -243,7 +304,7 @@ export function StorefrontClient({
             <input
               aria-label="Buscar en esta tienda"
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => updateQuery(event.target.value)}
               placeholder={`Buscar en ${store.name}...`}
             />
           </label>
@@ -265,7 +326,7 @@ export function StorefrontClient({
             <input
               aria-label="Buscar en esta tienda"
               value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => updateQuery(event.target.value)}
               placeholder={`Buscar en ${store.name}...`}
             />
           </label>
@@ -315,6 +376,11 @@ export function StorefrontClient({
               </span>
               <h1>{store.name}</h1>
               <p>{store.category ?? "Tienda local"}</p>
+              {storeDescription ? (
+                <p className="store-identity-description">
+                  {storeDescription}
+                </p>
+              ) : null}
             </div>
           </div>
           <div className="store-cover-meta">
@@ -414,7 +480,7 @@ export function StorefrontClient({
                   key={category}
                   className={activeCategory === category ? "active" : ""}
                   type="button"
-                  onClick={() => setActiveCategory(category)}
+                  onClick={() => updateCategory(category)}
                 >
                   {category === "Todos" ? (
                     <Package weight="duotone" />
@@ -449,7 +515,7 @@ export function StorefrontClient({
                 <select
                   aria-label="Ordenar productos"
                   value={sort}
-                  onChange={(event) => setSort(event.target.value)}
+                  onChange={(event) => updateSort(event.target.value)}
                 >
                   <option value="featured">Destacados</option>
                   <option value="price-low">Menor precio</option>
@@ -459,8 +525,9 @@ export function StorefrontClient({
               </label>
             </div>
             {visibleProducts.length ? (
-              <div className="store-products-grid">
-                       {visibleProducts.map((product) => (
+              <>
+                <div className="store-products-grid">
+                       {paginatedProducts.map((product) => (
                    <article className="store-product-card" key={product.id}>
                      <div className="store-product-image">
                        {product.image ? (
@@ -496,7 +563,7 @@ export function StorefrontClient({
                        <button
                          type="button"
                          className="product-preview-trigger"
-                         onClick={() => setSelectedProduct(product)}
+                         onClick={() => openProductDetails(product)}
                          aria-label={`Ver detalles de ${product.name}`}
                        />
                        <button
@@ -523,6 +590,11 @@ export function StorefrontClient({
                      <div className="store-product-copy">
                        <span className="product-store-name">{store.name}</span>
                        <h3 className="product-title">{product.name}</h3>
+                       {product.description?.trim() ? (
+                         <p className="product-description">
+                           {product.description.trim()}
+                         </p>
+                       ) : null}
                        <div className="product-price-row">
                          <strong>
                            C$ {product.price.toLocaleString("es-NI")}
@@ -539,22 +611,60 @@ export function StorefrontClient({
                            ).label}
                          </span>
                        </div>
-<AddToCartButton
-                          product={product}
-                          storeId={store.id}
-                          storeName={store.name}
-                          storeSlug={store.slug}
+                       {product.variant_options?.length ? (
+                         <button
+                           type="button"
+                           className="button add-to-cart-button variant-select-button"
+                           onClick={() => openProductDetails(product)}
+                         >
+                           Elegir opciones
+                         </button>
+                       ) : (
+                         <AddToCartButton
+                           product={product}
+                           storeId={store.id}
+                           storeName={store.name}
+                           storeSlug={store.slug}
                          />
+                       )}
                       </div>
                     </article>
                   ))}
                 </div>
+                {totalPages > 1 ? (
+                  <nav className="catalog-pagination" aria-label="Paginación de productos">
+                    <button
+                      type="button"
+                      className="catalog-pagination-button"
+                      onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                      disabled={pageForDisplay === 1}
+                      aria-label="Página anterior"
+                    >
+                      <CaretLeft weight="bold" />
+                      <span>Anterior</span>
+                    </button>
+                    <span className="catalog-pagination-status" aria-live="polite">
+                      Página {pageForDisplay} de {totalPages}
+                    </span>
+                    <button
+                      type="button"
+                      className="catalog-pagination-button"
+                      onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+                      disabled={pageForDisplay === totalPages}
+                      aria-label="Página siguiente"
+                    >
+                      <span>Siguiente</span>
+                      <CaretRight weight="bold" />
+                    </button>
+                  </nav>
+                ) : null}
+              </>
               ) : (
                 <div className="catalog-empty">
                   <SlidersHorizontal />
                   <h3>No encontramos productos</h3>
                   <p>Prueba con otra búsqueda.</p>
-                  <button type="button" onClick={() => setQuery("")}>
+                  <button type="button" onClick={() => updateQuery("")}>
                     Limpiar búsqueda
                   </button>
                 </div>
@@ -609,25 +719,49 @@ export function StorefrontClient({
             >
               <X weight="bold" />
             </button>
-            <div className="product-modal-image">
-              {selectedProduct.image ? (
-                <Image
-                  src={selectedProduct.image}
-                  alt={selectedProduct.name}
-                  fill
-                  sizes="(max-width: 760px) 100vw, 55vw"
-                  priority
-                />
-              ) : (
-                <div className="product-image-fallback">
-                  <Package weight="duotone" />
+            <div className="product-modal-gallery">
+              <div className="product-modal-image">
+                {selectedImage?.image_url ? (
+                  <Image
+                    src={selectedImage.image_url}
+                    alt={selectedImage.alt_text ?? selectedProduct.name}
+                    fill
+                    sizes="(max-width: 760px) 100vw, 55vw"
+                    priority
+                  />
+                ) : (
+                  <div className="product-image-fallback">
+                    <Package weight="duotone" />
+                  </div>
+                )}
+              </div>
+              {selectedImages.length > 1 ? (
+                <div
+                  className="product-modal-thumbnails"
+                  aria-label="Fotos del producto"
+                >
+                  {selectedImages.map((image, index) => (
+                    <button
+                      type="button"
+                      key={image.id ?? image.image_url}
+                      className={index === selectedImageIndex ? "active" : ""}
+                      onClick={() => setSelectedImageIndex(index)}
+                      aria-label={`Ver foto ${index + 1}`}
+                    >
+                      <Image src={image.image_url} alt="" fill sizes="76px" />
+                    </button>
+                  ))}
                 </div>
-              )}
+              ) : null}
             </div>
             <div className="product-modal-copy">
               <span className="product-store-name">{store.name}</span>
               <h2 id="product-modal-title">{selectedProduct.name}</h2>
-              <p>{selectedProduct.description ?? "Producto de catálogo"}</p>
+              {selectedProduct.description?.trim() ? (
+                <p className="product-description product-description--detail">
+                  {selectedProduct.description.trim()}
+                </p>
+              ) : null}
               <div className="product-modal-price">
                 <strong>
                   C$ {selectedProduct.price.toLocaleString("es-NI")}
@@ -644,12 +778,61 @@ export function StorefrontClient({
                   ).label}
                 </span>
               </div>
+              {variantGroups.length ? (
+                <div className="product-variant-options">
+                  {variantGroups.map((group) => (
+                    <div className="product-variant-group" key={group.name}>
+                      <strong>{group.name}</strong>
+                      <div className="product-variant-values">
+                        {group.values.map((value) => (
+                          <button
+                            type="button"
+                            key={value}
+                            className={
+                              selectedVariants[group.name] === value
+                                ? "active"
+                                : ""
+                            }
+                            aria-pressed={selectedVariants[group.name] === value}
+                            aria-label={`${group.name}: ${value}`}
+                            onClick={() =>
+                              setSelectedVariants((current) => ({
+                                ...current,
+                                [group.name]: value,
+                              }))
+                            }
+                          >
+                            {value}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+              {variantGroups.length ? (
+                <p
+                  className={`product-selection-status ${variantsReady ? "ready" : "pending"}`}
+                  role="status"
+                >
+                  {variantsReady
+                    ? `Seleccionado · ${variantSelectionSummary}`
+                    : `Falta seleccionar: ${missingVariantGroups.map((group) => group.name).join(" y ")}`}
+                </p>
+              ) : null}
               <AddToCartButton
                 product={selectedProduct}
                 storeId={store.id}
                 storeName={store.name}
-storeSlug={store.slug}
-             />
+                storeSlug={store.slug}
+                variantOptions={selectedVariants}
+                disabled={!variantsReady}
+                disabledLabel={
+                  missingVariantGroups.length
+                    ? `Selecciona ${missingVariantGroups.map((group) => group.name).join(" y ")}`
+                    : undefined
+                }
+              />
             </div>
           </section>
         </div>

@@ -191,7 +191,7 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
     const lines = group.items
       .map(
         (item) =>
-          `• ${item.name} x${item.quantity} — C$ ${(item.price * item.quantity).toLocaleString("es-NI")}`,
+          `• ${item.name} x${item.quantity}${Object.entries(item.variantOptions ?? {}).map(([name, value]) => ` · ${name}: ${value}`).join("")} — C$ ${(item.price * item.quantity).toLocaleString("es-NI")}`,
       )
       .join("\n");
     const subtotal = group.items.reduce(
@@ -269,6 +269,7 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
             id: item.id,
             price: item.price,
             quantity: item.quantity,
+            variantOptions: item.variantOptions ?? {},
           })),
         })),
       });

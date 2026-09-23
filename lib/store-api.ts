@@ -1,4 +1,4 @@
-import { supabase, type Store } from "@/lib/supabase";
+import { supabase, type ProductVariantGroup, type Store } from "@/lib/supabase";
 import { normalizeStoreSlug } from "@/lib/store-slug";
 import { normalizeFulfillmentMode } from "@/lib/product-availability";
 const fallbackImage =
@@ -10,6 +10,18 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function stringValue(value: unknown) {
   return typeof value === "string" && value.trim() ? value : undefined;
+}
+
+function normalizeVariantOptions(value: unknown): ProductVariantGroup[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((entry) => {
+    if (!isRecord(entry)) return [];
+    const name = stringValue(entry.name);
+    const values = Array.isArray(entry.values)
+      ? [...new Set(entry.values.map(stringValue).filter(Boolean) as string[])]
+      : [];
+    return name && values.length ? [{ name, values }] : [];
+  });
 }
 
 function sanitizePublicStoreJson(value: unknown): Store["store_json"] {
@@ -115,22 +127,41 @@ function mapProductsWithImages(
     fulfillment_mode: string | null;
     is_active: boolean;
     created_at?: string;
-    product_images?: Array<{ image_url: string | null }> | null;
+    product_images?: Array<{
+      id?: string;
+      image_url: string | null;
+      sort_order?: number;
+      alt_text?: string | null;
+    }> | null;
+    variant_options?: unknown;
   }>,
 ) {
-  return products.map((product) => ({
-    id: product.id,
-    store_id: product.store_id,
-    name: product.name,
-    description: product.description,
-    category: product.category ?? null,
-    price: Number(product.price),
-    stock: product.stock,
-    fulfillment_mode: normalizeFulfillmentMode(product.fulfillment_mode),
-    is_active: product.is_active,
-    created_at: product.created_at,
-    image: product.product_images?.[0]?.image_url ?? fallbackImage,
-  }));
+  return products.map((product) => {
+    const images = [...(product.product_images ?? [])]
+      .filter((image) => Boolean(image.image_url))
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+      .map((image) => ({
+        id: image.id,
+        image_url: image.image_url as string,
+        sort_order: image.sort_order ?? 0,
+        alt_text: image.alt_text ?? null,
+      }));
+    return {
+      id: product.id,
+      store_id: product.store_id,
+      name: product.name,
+      description: product.description,
+      category: product.category ?? null,
+      price: Number(product.price),
+      stock: product.stock,
+      fulfillment_mode: normalizeFulfillmentMode(product.fulfillment_mode),
+      is_active: product.is_active,
+      created_at: product.created_at,
+      images,
+      image: images[0]?.image_url ?? fallbackImage,
+      variant_options: normalizeVariantOptions(product.variant_options),
+    };
+  });
 }
 
 export async function getStores() {
@@ -160,7 +191,7 @@ export async function getStores() {
   const { data: products, error: productsError } = await supabase
     .from("products")
     .select(
-      "id, store_id, name, description, category, price, stock, fulfillment_mode, is_active, created_at, product_images(image_url)",
+      "id, store_id, name, description, category, price, stock, fulfillment_mode, is_active, created_at, variant_options, product_images(id, image_url, sort_order, alt_text)",
     )
     .eq("is_active", true);
 
@@ -251,7 +282,7 @@ export async function getStoreBySlug(slug: string) {
   const { data: products, error: productsError } = await supabase
     .from("products")
     .select(
-      "id, store_id, name, description, category, price, stock, fulfillment_mode, is_active, product_images(image_url)",
+      "id, store_id, name, description, category, price, stock, fulfillment_mode, is_active, variant_options, product_images(id, image_url, sort_order, alt_text)",
     )
     .eq("store_id", store.id)
     .eq("is_active", true)
