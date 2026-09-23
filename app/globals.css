@@ -2573,6 +2573,19 @@ h2 {
 .add-to-cart-button:active:not(:disabled) {
   transform: translateY(0) scale(0.99);
 }
+.add-to-cart-button:disabled {
+  cursor: not-allowed;
+  background: #e8ecf3;
+  border: 1px solid #d4dbe6;
+  color: #7b8799;
+  box-shadow: none;
+  filter: none;
+  opacity: 1;
+  transform: none;
+}
+.add-to-cart-button:disabled::before {
+  opacity: 0;
+}
 .cart-button-icon {
   width: 28px;
   height: 28px;

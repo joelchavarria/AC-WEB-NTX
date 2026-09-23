@@ -45,6 +45,7 @@ export function AddToCartButton({
     <button
       className="button add-to-cart-button"
       disabled={!availability.canAdd || disabled}
+      aria-disabled={!availability.canAdd || disabled}
       onClick={() => {
         addToCart({ ...product, storeId, storeName, storeSlug, variantOptions, quantity: 1 });
       }}
