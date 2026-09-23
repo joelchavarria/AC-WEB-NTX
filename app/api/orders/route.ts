@@ -319,7 +319,8 @@ export async function POST(request: Request) {
     );
 
   // Canonical payload ignores client-supplied prices, descriptions and images,
-  // but carries selected product options so the order retains color and size.
+  // but carries every selected product variation so the order retains the
+  // custom fields configured by the store.
   // One transaction covers every store, fees, inventory and retry deduplication.
   const payload = {
     customer: {

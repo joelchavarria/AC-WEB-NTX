@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
   const { data: orders, error: orderError } = await supabase
     .from("orders")
     .select(
-      "id, order_number, customer_name, total, store_id, order_items(product_name, quantity), stores(owner_profile_id, name)",
+      "id, order_number, customer_name, total, store_id, order_items(product_name, quantity, variant_options), stores(owner_profile_id, name)",
     )
     .in("id", orderIds);
   if (orderError) return respond({ error: "Could not load orders" }, 500);
@@ -117,7 +117,7 @@ Deno.serve(async (req) => {
         to: entry.token,
         sound: "default",
         title: `¡Estás en la Ondie! Nuevo pedido ORD ${order.order_number}`,
-        body: `${order.customer_name || "Cliente web"}${order.order_items?.length ? ` · ${order.order_items.map((item: { quantity: number; product_name: string }) => `${item.quantity}x ${item.product_name}`).join(" · ")}` : ""}`,
+        body: `${order.customer_name || "Cliente web"}${order.order_items?.length ? ` · ${order.order_items.map((item: { quantity: number; product_name: string; variant_options?: Record<string, string> }) => `${item.quantity}x ${item.product_name}${Object.entries(item.variant_options ?? {}).map(([name, value]) => ` · ${name}: ${value}`).join("")}`).join(" · ")}` : ""}`,
         data: {
           type: "order",
           orderId: order.id,
