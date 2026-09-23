@@ -33,7 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="es" suppressHydrationWarning className={inter.className}>
       <body>
-        <NoticeCenterProvider>{children}<footer className="legal-footer" aria-label="Información legal"><span>ONDIE</span><Link href="/privacidad">Política de privacidad</Link><Link href="/terminos">Términos y condiciones</Link></footer></NoticeCenterProvider>
+        <NoticeCenterProvider>{children}<footer className="legal-footer" aria-label="Información legal"><span>© ONDIE {new Date().getFullYear()}</span><Link href="/privacidad">Política de privacidad</Link><Link href="/terminos">Términos y condiciones</Link></footer></NoticeCenterProvider>
         <Analytics />
         <SpeedInsights />
       </body>
