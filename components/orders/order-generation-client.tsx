@@ -41,6 +41,7 @@ type Contacts = Record<
     phone: string;
     category: string;
     paymentMethods: string[];
+    cashEnabled: boolean;
     paymentAccounts: Array<{
       bankName: string;
       accountHolder?: string;
@@ -64,6 +65,7 @@ type DeliveryMethod = "pickup" | "own_delivery" | "store_delivery";
 type OrderGroup = { storeId: string; storeName: string; items: CartItem[] };
 type PreparedOrder = { id: string; orderNumber: number; storeId: string };
 type SentReceipt = { orderNumber: number; storeName: string; sentAt: number };
+type CheckoutError = Error & { reportable?: boolean };
 const LAST_SENT_ORDER_KEY = "ondie-last-sent-order";
 const CHECKOUT_DEVICE_ID_KEY = "ondie-checkout-device-id";
 
@@ -170,11 +172,27 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
         )
       : 0;
   const total = subtotal + shippingFee;
-  const valid =
+  const pickupAvailable =
+    groups.length > 0 &&
+    groups.every((group) => contacts[group.storeId]?.pickupEnabled === true);
+  const cashAvailable =
+    groups.length > 0 &&
+    groups.every((group) => contacts[group.storeId]?.cashEnabled !== false);
+  const deliverySelectionReady =
+    deliveryMethod !== "store_delivery" ||
+    groups.every((group) => {
+      const methods = contacts[group.storeId]?.deliveryMethods ?? [];
+      return methods.length === 0 || Boolean(selectedStoreMethod(group.storeId)?.id);
+    });
+  const valid = Boolean(
     name.trim() &&
-    phone.trim() &&
-    (deliveryMethod !== "store_delivery" || address.trim()) &&
-    items.length;
+      phone.trim() &&
+      (deliveryMethod !== "store_delivery" || address.trim()) &&
+      (deliveryMethod !== "pickup" || pickupAvailable) &&
+      (payment !== "cash" || cashAvailable) &&
+      deliverySelectionReady &&
+      items.length,
+  );
   const catalogHref = exclusiveStore
     ? `/catalogo/${exclusiveStore.storeSlug}`
     : "/";
@@ -312,18 +330,27 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
 
       if (!response.ok) {
         const data = await response.json().catch(() => null);
-        throw new Error(data?.error ?? "No fue posible guardar el pedido.");
+        const checkoutError = new Error(
+          data?.error ?? "No fue posible guardar el pedido.",
+        ) as CheckoutError;
+        checkoutError.reportable = data?.reportable === true;
+        checkoutError.name = data?.code ?? "CHECKOUT_REQUEST_FAILED";
+        throw checkoutError;
       }
 
       const data = (await response.json().catch(() => null)) as {
         orders?: PreparedOrder[];
         message?: string;
+        reportable?: boolean;
+        code?: string;
       } | null;
 
       if (!data?.orders || data.orders.length !== groups.length) {
-        throw new Error(
+        const checkoutError = new Error(
           "No pudimos confirmar la respuesta. Intenta de nuevo para recuperar tu pedido.",
-        );
+        ) as CheckoutError;
+        checkoutError.name = "CHECKOUT_RESPONSE_INVALID";
+        throw checkoutError;
       }
       window.sessionStorage.removeItem(retryStorageKey);
       setPreparedGroups(groups);
@@ -341,6 +368,15 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
     } catch (error) {
       showNotice({
         tone: "error",
+        category: "checkout",
+        reportable:
+          error instanceof Error && "reportable" in error
+            ? (error as CheckoutError).reportable !== false
+            : true,
+        code:
+          error instanceof Error && error.name.startsWith("CHECKOUT_")
+            ? error.name
+            : "CHECKOUT_NETWORK_ERROR",
         title: "No pudimos preparar tu pedido",
         description:
           error instanceof Error
@@ -437,6 +473,8 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
                     type="button"
                     className={deliveryMethod === "pickup" ? "active" : ""}
                     onClick={() => setDeliveryMethod("pickup")}
+                    disabled={!pickupAvailable || submitted}
+                    title={!pickupAvailable ? "No disponible para todas las tiendas" : undefined}
                   >
                     <Package /> Pick up
                   </button>
@@ -446,6 +484,7 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
                       deliveryMethod === "own_delivery" ? "active" : ""
                     }
                     onClick={() => setDeliveryMethod("own_delivery")}
+                    disabled={submitted}
                   >
                     <Truck /> Yo enviaré al delivery
                   </button>
@@ -455,6 +494,7 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
                       deliveryMethod === "store_delivery" ? "active" : ""
                     }
                     onClick={() => setDeliveryMethod("store_delivery")}
+                    disabled={submitted}
                   >
                     <Storefront /> Delivery de tienda
                   </button>
@@ -540,6 +580,7 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
                     type="button"
                     className={payment === "transfer" ? "active" : ""}
                     onClick={() => setPayment("transfer")}
+                    disabled={submitted}
                   >
                     <Bank /> Transferencia / depósito
                   </button>
@@ -547,6 +588,8 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
                     type="button"
                     className={payment === "cash" ? "active" : ""}
                     onClick={() => setPayment("cash")}
+                    disabled={!cashAvailable || submitted}
+                    title={!cashAvailable ? "No disponible para todas las tiendas" : undefined}
                   >
                     <Money /> Efectivo
                   </button>

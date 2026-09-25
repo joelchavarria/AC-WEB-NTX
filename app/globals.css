@@ -4147,6 +4147,14 @@ h2 {
   color: #142fe3;
   background: #f8f9ff;
 }
+.payment-options button:disabled,
+.delivery-options button:disabled {
+  cursor: not-allowed;
+  color: #9aa5b5;
+  background: #f5f6f8;
+  border-color: #e3e7ee;
+  opacity: 0.7;
+}
 .payment-options svg {
   width: 23px;
   height: 23px;
@@ -4828,6 +4836,32 @@ h2 {
   color: #667387;
   font-size: 0.7rem;
   line-height: 1.5;
+}
+.notice-report {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  width: fit-content;
+  margin-top: 7px;
+  color: #b42318;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.notice-report:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+.notice-report:focus-visible {
+  outline: 3px solid rgba(180, 35, 24, 0.24);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+.notice-actions {
+  display: flex;
+  align-items: flex-start;
 }
 .notice-close {
   width: 28px;

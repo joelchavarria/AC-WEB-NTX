@@ -97,7 +97,7 @@ export function AccountAuthClient() {
         setMode("login");
       }
     } catch (authError) {
-      showNotice({ tone: "error", title: "No pudimos completar tu acceso", description: readableAuthError(authError instanceof Error ? authError.message : "") });
+      showNotice({ tone: "error", category: "auth", reportable: false, title: "No pudimos completar tu acceso", description: readableAuthError(authError instanceof Error ? authError.message : "") });
     } finally {
       setLoading(false);
     }

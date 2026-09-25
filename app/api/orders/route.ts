@@ -31,9 +31,14 @@ type OrderRequest = {
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-function userError(message: string, status = 400) {
+function userError(
+  message: string,
+  status = 400,
+  reportable = false,
+  code?: string,
+) {
   return NextResponse.json(
-    { error: message },
+    { error: message, reportable, ...(code ? { code } : {}) },
     {
       status,
       headers: {
@@ -51,6 +56,8 @@ function friendlyServerError() {
   return userError(
     "No pudimos preparar tu pedido en este momento. Intenta nuevamente en unos minutos.",
     500,
+    true,
+    "CHECKOUT_INTERNAL_ERROR",
   );
 }
 
@@ -195,12 +202,12 @@ export async function POST(request: Request) {
 
   const requestId = request.headers.get("idempotency-key");
   if (!requestId || !uuid.test(requestId))
-    return userError("Identificador de compra inválido.");
+    return userError("Identificador de compra inválido.", 400, false, "CHECKOUT_INVALID_REQUEST_ID");
   if (request.headers.get("sec-fetch-site") === "cross-site")
-    return userError("Origen no permitido.", 403);
+    return userError("Origen no permitido.", 403, false, "CHECKOUT_ORIGIN_REJECTED");
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin) {
-    return userError("Origen no permitido.", 403);
+    return userError("Origen no permitido.", 403, false, "CHECKOUT_ORIGIN_REJECTED");
   }
   if (
     !request.headers
@@ -208,11 +215,11 @@ export async function POST(request: Request) {
       ?.toLowerCase()
       .includes("application/json")
   ) {
-    return userError("Envía un pedido en formato JSON.", 415);
+    return userError("Envía un pedido en formato JSON.", 415, false, "CHECKOUT_INVALID_CONTENT_TYPE");
   }
   // Read with a hard limit, including requests without Content-Length.
   const reader = request.body?.getReader();
-  if (!reader) return userError("Pedido vacío.");
+  if (!reader) return userError("Pedido vacío.", 400, false, "CHECKOUT_EMPTY_REQUEST");
   const chunks: Uint8Array[] = [];
   let size = 0;
   let body: OrderRequest;
@@ -223,7 +230,7 @@ export async function POST(request: Request) {
       size += value.byteLength;
       if (size > 64 * 1024) {
         await reader.cancel();
-        return userError("El pedido es demasiado grande.", 413);
+        return userError("El pedido es demasiado grande.", 413, false, "CHECKOUT_REQUEST_TOO_LARGE");
       }
       chunks.push(value);
     }
@@ -235,10 +242,10 @@ export async function POST(request: Request) {
     }
     const parsed = JSON.parse(new TextDecoder().decode(bytes));
     if (!isOrderRequest(parsed))
-      return userError("Datos del pedido inválidos.");
+      return userError("Datos del pedido inválidos.", 400, false, "CHECKOUT_INVALID_REQUEST");
     body = parsed;
   } catch {
-    return userError("Datos del pedido inválidos.");
+    return userError("Datos del pedido inválidos.", 400, false, "CHECKOUT_INVALID_REQUEST");
   }
   const name = body.customer?.name?.trim();
   const phone = body.customer?.phone?.trim();
@@ -255,7 +262,7 @@ export async function POST(request: Request) {
     (deliveryMethod === "store_delivery" && !address) ||
     !groups.length
   ) {
-    return userError("Completa tus datos de entrega para continuar.");
+    return userError("Completa tus datos de entrega para continuar.", 400, false, "CHECKOUT_MISSING_CUSTOMER_DATA");
   }
 
   const supabase = createClient(supabaseUrl, serviceRoleKey, {
@@ -278,7 +285,7 @@ export async function POST(request: Request) {
       abuseClientKey,
       storeIds.length,
     );
-    return userError("No se pudo validar el pedido.", 403);
+    return userError("No se pudo validar el pedido.", 403, false, "CHECKOUT_BOT_DETECTED");
   }
 
   const turnstileSecret = process.env.TURNSTILE_SECRET_KEY?.trim();
@@ -292,7 +299,7 @@ export async function POST(request: Request) {
       abuseClientKey,
       storeIds.length,
     );
-    return userError("No se pudo validar el pedido.", 403);
+    return userError("No se pudo validar el pedido.", 403, false, "CHECKOUT_BOT_VERIFICATION_FAILED");
   }
 
   const rateKeys = [
@@ -316,6 +323,8 @@ export async function POST(request: Request) {
     return userError(
       "Demasiados intentos. Espera unos minutos antes de volver a intentar.",
       429,
+      false,
+      "CHECKOUT_RATE_LIMITED",
     );
 
   // Canonical payload ignores client-supplied prices, descriptions and images,
@@ -353,8 +362,47 @@ export async function POST(request: Request) {
     },
   );
   if (orderError) {
+    // Expected checkout conflicts are user-correctable and should not become
+    // technical error reports or noisy server logs.
+    const expectedMessages = new Set([
+      "La tienda ya no está disponible.",
+      "El carrito está vacío.",
+      "El carrito contiene cantidades inválidas.",
+      "Uno de los productos ya no está disponible.",
+      "No hay suficientes existencias para completar el pedido.",
+      "Selecciona opciones válidas para cada producto.",
+      "La tienda no ofrece retiro en local.",
+      "La tienda no acepta efectivo.",
+      "Completa la dirección de entrega.",
+      "El método de envío ya no está disponible.",
+      "Configuración de envío inválida.",
+    ]);
+    const isExpected =
+      orderError.code === "P4000" ||
+      orderError.code === "P4090" ||
+      expectedMessages.has(orderError.message);
+    if (isExpected) {
+      const message = expectedMessages.has(orderError.message)
+        ? orderError.message
+        : "El pedido cambió mientras lo confirmábamos. Revisa tu carrito e inténtalo nuevamente.";
+      const code =
+        message === "Selecciona opciones válidas para cada producto."
+          ? "CHECKOUT_VARIANT_OPTIONS_INVALID"
+          : orderError.code === "P4090"
+            ? "CHECKOUT_INVENTORY_CONFLICT"
+            : "CHECKOUT_VALIDATION_FAILED";
+      return userError(
+        message,
+        orderError.code === "P4090" ? 409 : 400,
+        code === "CHECKOUT_VARIANT_OPTIONS_INVALID",
+        code,
+      );
+    }
     // Never expose raw SQL, internal codes, or database messages to customers.
-    console.error("Checkout processing failed");
+    console.error("Checkout processing failed", {
+      code: orderError.code ?? "unknown",
+      requestId,
+    });
     return friendlyServerError();
   }
   if (!Array.isArray(createdOrders) || createdOrders.length !== groups.length)

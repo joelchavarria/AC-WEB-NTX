@@ -71,6 +71,7 @@ function sanitizePublicStoreJson(value: unknown): Store["store_json"] {
       hours: stringValue(profile.hours),
       coverImage: stringValue(profile.coverImage),
       managuaFee: stringValue(profile.managuaFee),
+      cashEnabled: profile.cashEnabled !== false,
       pickupEnabled: profile.pickupEnabled === true,
       pickupAddress: stringValue(profile.pickupAddress),
       businessHours,

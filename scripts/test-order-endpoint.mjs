@@ -106,7 +106,7 @@ assert.equal(response.status, 200);
 assert.equal(calls[0].name, "consume_checkout_rate_limits");
 assert.equal(calls[1].name, "create_checkout");
 assert.deepEqual(calls[1].args.p_payload.groups[0].items, [
-  { id: productId, quantity: 1 },
+  { id: productId, quantity: 1, variant_options: {} },
 ]);
 assert.equal(calls[0].args.p_client_keys.length, 3);
 assert.ok(
@@ -116,7 +116,21 @@ limit = false;
 assert.equal((await exports.POST(request())).status, 429);
 limit = true;
 failure = { code: "P4090", message: "No hay suficientes existencias." };
-assert.equal((await exports.POST(request())).status, 500);
+const inventoryConflict = await exports.POST(request());
+assert.equal(inventoryConflict.status, 409);
+assert.deepEqual(await inventoryConflict.json(), {
+  error: "El pedido cambió mientras lo confirmábamos. Revisa tu carrito e inténtalo nuevamente.",
+  reportable: false,
+  code: "CHECKOUT_INVENTORY_CONFLICT",
+});
+failure = { code: "P4000", message: "Selecciona opciones válidas para cada producto." };
+const invalidVariants = await exports.POST(request());
+assert.equal(invalidVariants.status, 400);
+assert.deepEqual(await invalidVariants.json(), {
+  error: "Selecciona opciones válidas para cada producto.",
+  reportable: true,
+  code: "CHECKOUT_VARIANT_OPTIONS_INVALID",
+});
 failure = { code: "XX000", message: "private SQL secret detail" };
 const previousError = console.error;
 console.error = () => {};

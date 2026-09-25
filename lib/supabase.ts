@@ -38,6 +38,7 @@ export type Store = {
       hours?: string;
       coverImage?: string;
       managuaFee?: string;
+      cashEnabled?: boolean;
       pickupEnabled?: boolean;
       pickupAddress?: string;
       businessHours?: Array<{
