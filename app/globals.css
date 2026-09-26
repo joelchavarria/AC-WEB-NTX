@@ -4440,6 +4440,16 @@ h2 {
   color: #758195;
   font-size: 0.64rem;
 }
+.whatsapp-submit-card > .checkout-whatsapp-warning {
+  margin: 0 0 15px;
+  padding: 10px 12px;
+  border: 1px solid #f3c9a9;
+  border-radius: 9px;
+  background: #fff7ed;
+  color: #8a3912;
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
 .prepare-order,
 .send-whatsapp {
   width: 100%;
@@ -4463,25 +4473,6 @@ h2 {
 .send-whatsapp {
   background: #12af4b;
   font-size: 0.7rem;
-}
-.sent-whatsapp {
-  width: 100%;
-  min-height: 49px;
-  margin-top: 10px;
-  border: 1px solid #a7e6bb;
-  border-radius: 11px;
-  background: #eaf9ee;
-  color: #087a35;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  font-size: 0.7rem;
-  font-weight: 800;
-}
-.sent-whatsapp svg {
-  width: 18px;
-  height: 18px;
 }
 .continue-shopping {
   width: 100%;

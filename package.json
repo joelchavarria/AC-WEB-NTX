@@ -13,6 +13,7 @@
     "seed:emparejados": "node scripts/seed-emparejados.mjs",
     "seed:collective": "node scripts/seed-ondie-collective.mjs",
     "test:orders": "node scripts/test-order-endpoint.mjs",
+    "test:whatsapp": "node scripts/test-whatsapp-routing.mjs",
     "test:orders:db": "python3 scripts/test-checkout-security.py",
     "test:tenant": "node scripts/test-tenant-isolation.mjs"
   },

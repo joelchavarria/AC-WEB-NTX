@@ -32,7 +32,7 @@ import {
   type CartItem,
   type ExclusiveStoreContext,
 } from "@/lib/cart";
-import { toWhatsAppNumber } from "@/lib/whatsapp";
+import { toWhatsAppNumber, whatsAppMessageUrl } from "@/lib/whatsapp";
 
 type Contacts = Record<
   string,
@@ -64,9 +64,9 @@ type Contacts = Record<
 type DeliveryMethod = "pickup" | "own_delivery" | "store_delivery";
 type OrderGroup = { storeId: string; storeName: string; items: CartItem[] };
 type PreparedOrder = { id: string; orderNumber: number; storeId: string };
-type SentReceipt = { orderNumber: number; storeName: string; sentAt: number };
+type OpenedReceipt = { orderNumber: number; storeName: string; openedAt: number };
 type CheckoutError = Error & { reportable?: boolean };
-const LAST_SENT_ORDER_KEY = "ondie-last-sent-order";
+const LAST_OPENED_ORDER_KEY = "ondie-last-opened-order";
 const CHECKOUT_DEVICE_ID_KEY = "ondie-checkout-device-id";
 
 function getCheckoutDeviceId() {
@@ -93,8 +93,8 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
   const [submitted, setSubmitted] = useState(false);
   const [preparedGroups, setPreparedGroups] = useState<OrderGroup[]>([]);
   const [preparedOrders, setPreparedOrders] = useState<PreparedOrder[]>([]);
-  const [sentStoreIds, setSentStoreIds] = useState<string[]>([]);
-  const [lastSent, setLastSent] = useState<SentReceipt | null>(null);
+  const [openedStoreIds, setOpenedStoreIds] = useState<string[]>([]);
+  const [lastOpened, setLastOpened] = useState<OpenedReceipt | null>(null);
   const [exclusiveStore, setExclusiveStore] =
     useState<ExclusiveStoreContext | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -115,15 +115,15 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
       setItems(scopedCart);
     };
     sync();
-    const saved = window.localStorage.getItem(LAST_SENT_ORDER_KEY);
+    const saved = window.localStorage.getItem(LAST_OPENED_ORDER_KEY);
     if (saved) {
       try {
-        const receipt = JSON.parse(saved) as SentReceipt;
-        if (Date.now() - receipt.sentAt < 24 * 60 * 60 * 1000)
-          setLastSent(receipt);
-        else window.localStorage.removeItem(LAST_SENT_ORDER_KEY);
+        const receipt = JSON.parse(saved) as OpenedReceipt;
+        if (Date.now() - receipt.openedAt < 24 * 60 * 60 * 1000)
+          setLastOpened(receipt);
+        else window.localStorage.removeItem(LAST_OPENED_ORDER_KEY);
       } catch {
-        window.localStorage.removeItem(LAST_SENT_ORDER_KEY);
+        window.localStorage.removeItem(LAST_OPENED_ORDER_KEY);
       }
     }
     return subscribeToCart(sync);
@@ -142,11 +142,14 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
     return [...map.values()];
   }, [items]);
   const displayGroups = submitted ? preparedGroups : groups;
-  const sentStoreIdSet = useMemo(() => new Set(sentStoreIds), [sentStoreIds]);
-  const allSent =
+  const openedStoreIdSet = useMemo(
+    () => new Set(openedStoreIds),
+    [openedStoreIds],
+  );
+  const allOpened =
     submitted &&
     preparedGroups.length > 0 &&
-    sentStoreIdSet.size === preparedGroups.length;
+    openedStoreIdSet.size === preparedGroups.length;
   const subtotal = displayGroups.reduce(
     (sum, group) =>
       sum +
@@ -184,6 +187,9 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
       const methods = contacts[group.storeId]?.deliveryMethods ?? [];
       return methods.length === 0 || Boolean(selectedStoreMethod(group.storeId)?.id);
     });
+  const storesWithoutWhatsApp = groups.filter(
+    (group) => !toWhatsAppNumber(contacts[group.storeId]?.phone),
+  );
   const valid = Boolean(
     name.trim() &&
       phone.trim() &&
@@ -191,6 +197,7 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
       (deliveryMethod !== "pickup" || pickupAvailable) &&
       (payment !== "cash" || cashAvailable) &&
       deliverySelectionReady &&
+      storesWithoutWhatsApp.length === 0 &&
       items.length,
   );
   const catalogHref = exclusiveStore
@@ -234,17 +241,16 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
   }
 
   function markWhatsAppOpened(group: OrderGroup) {
-    if (sentStoreIdSet.has(group.storeId)) return;
+    if (openedStoreIdSet.has(group.storeId)) return;
     const order = preparedOrders.find((item) => item.storeId === group.storeId);
     const receipt = {
       orderNumber: order?.orderNumber ?? 0,
       storeName: group.storeName,
-      sentAt: Date.now(),
+      openedAt: Date.now(),
     };
-    const nextSent = [...sentStoreIds, group.storeId];
-    setSentStoreIds(nextSent);
-    setLastSent(receipt);
-    window.localStorage.setItem(LAST_SENT_ORDER_KEY, JSON.stringify(receipt));
+    setOpenedStoreIds([...openedStoreIds, group.storeId]);
+    setLastOpened(receipt);
+    window.localStorage.setItem(LAST_OPENED_ORDER_KEY, JSON.stringify(receipt));
     showNotice({
       tone: "success",
       title: order?.orderNumber
@@ -255,8 +261,8 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
   }
 
   function dismissReceipt() {
-    setLastSent(null);
-    window.localStorage.removeItem(LAST_SENT_ORDER_KEY);
+    setLastOpened(null);
+    window.localStorage.removeItem(LAST_OPENED_ORDER_KEY);
   }
 
   async function submit(event: FormEvent) {
@@ -355,7 +361,7 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
       window.sessionStorage.removeItem(retryStorageKey);
       setPreparedGroups(groups);
       setPreparedOrders(data?.orders ?? []);
-      setSentStoreIds([]);
+      setOpenedStoreIds([]);
       setSubmitted(true);
       clearCart();
       showNotice({
@@ -794,45 +800,55 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
               </section>
               <section className="whatsapp-submit-card">
                 <h2>
-                  {allSent ? "Pedido compartido" : "Enviar pedido por WhatsApp"}
+                  {allOpened ? "Chats abiertos" : "Enviar pedido por WhatsApp"}
                 </h2>
                 <p>
-                  {allSent
+                  {allOpened
                     ? "Ya quitamos estos productos del carrito para evitar pedidos duplicados."
                     : "Se preparará un mensaje independiente para cada tienda."}
                 </p>
+                {!submitted && storesWithoutWhatsApp.length > 0 ? (
+                  <p role="alert" className="checkout-whatsapp-warning">
+                    No se puede enviar el pedido porque falta un número de
+                    WhatsApp válido de Nicaragua (+505 y ocho dígitos) en: {storesWithoutWhatsApp
+                      .map((group) => group.storeName)
+                      .join(", ")}.
+                  </p>
+                ) : null}
                 {submitted ? (
                   <div className="ready-order">
                     <Check />
                     <span>
                       <strong>
-                        {allSent
-                          ? "¡Pedido enviado!"
+                        {allOpened
+                          ? "WhatsApp abierto"
                           : "¡Tu pedido está listo!"}
                       </strong>
                       <small>
-                        {allSent
-                          ? "La tienda ya recibió el acceso a tu solicitud por WhatsApp."
-                          : "Abre cada conversación para enviarlo."}
+                        {allOpened
+                          ? "Pulsa Enviar en cada conversación para compartir el pedido."
+                          : "Abre cada conversación y pulsa Enviar en WhatsApp."}
                       </small>
                     </span>
                   </div>
                 ) : null}
                 {submitted ? (
                   displayGroups.map((group) => {
-                    const sent = sentStoreIdSet.has(group.storeId);
-                    if (sent)
-                      return (
-                        <div className="sent-whatsapp" key={group.storeId}>
-                          <Check weight="bold" /> Enviado a {group.storeName}
-                        </div>
-                      );
-                    const number = toWhatsAppNumber(
+                    const opened = openedStoreIdSet.has(group.storeId);
+                    const href = whatsAppMessageUrl(
                       contacts[group.storeId]?.phone,
+                      messageFor(group),
                     );
-                    const href = number
-                      ? `https://wa.me/${number}?text=${encodeURIComponent(messageFor(group))}`
-                      : `https://wa.me/?text=${encodeURIComponent(messageFor(group))}`;
+                    if (!href)
+                      return (
+                        <p
+                          role="alert"
+                          className="checkout-whatsapp-warning"
+                          key={group.storeId}
+                        >
+                          No hay un WhatsApp válido con +505 para {group.storeName}.
+                        </p>
+                      );
                     return (
                       <a
                         key={group.storeId}
@@ -842,7 +858,10 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
                         className="send-whatsapp"
                         onClick={() => markWhatsAppOpened(group)}
                       >
-                        <WhatsappLogo weight="fill" /> Enviar a{" "}
+                        <WhatsappLogo weight="fill" />{" "}
+                        {opened
+                          ? "Volver a abrir WhatsApp de"
+                          : "Abrir WhatsApp de"}{" "}
                         {group.storeName}
                       </a>
                     );
@@ -858,7 +877,7 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
                     <ArrowRight />
                   </button>
                 )}
-                {allSent ? (
+                {allOpened ? (
                   <Link href={catalogHref} className="continue-shopping">
                     Seguir comprando <ArrowRight />
                   </Link>
@@ -875,13 +894,13 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
           </form>
         ) : (
           <section className="order-empty">
-            {lastSent ? (
+            {lastOpened ? (
               <>
                 <Check />
-                <h2>Pedido ORD-{lastSent.orderNumber || "—"} compartido</h2>
+                <h2>Pedido ORD-{lastOpened.orderNumber || "—"} generado</h2>
                 <p>
-                  Ya enviaste tu pedido a {lastSent.storeName}. El carrito quedó
-                  limpio.
+                  Abriste WhatsApp de {lastOpened.storeName}. Confirma que hayas
+                  enviado el mensaje. El carrito quedó limpio.
                 </p>
                 <Link href={catalogHref}>
                   Seguir comprando <ArrowRight />
@@ -923,7 +942,7 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
           </div>
         </section>
       </div>
-      {lastSent ? (
+      {lastOpened ? (
         <div
           className="order-return-confirmation"
           role="status"
@@ -934,13 +953,13 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
           </span>
           <div>
             <strong>
-              {lastSent.orderNumber
-                ? `Pedido ORD-${lastSent.orderNumber} generado correctamente`
+              {lastOpened.orderNumber
+                ? `Pedido ORD-${lastOpened.orderNumber} generado correctamente`
                 : "Pedido generado correctamente"}
             </strong>
             <small>
-              Enviado a {lastSent.storeName}. Guardamos este código como
-              comprobante y limpiamos el carrito.
+              Abriste WhatsApp de {lastOpened.storeName}. Pulsa Enviar allí para
+              compartir el pedido. Limpiamos el carrito.
             </small>
           </div>
           <button

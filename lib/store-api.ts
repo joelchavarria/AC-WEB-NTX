@@ -3,6 +3,8 @@ import { normalizeStoreSlug } from "@/lib/store-slug";
 import { normalizeFulfillmentMode } from "@/lib/product-availability";
 const fallbackImage =
   "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=600&h=600&fit=crop&auto=format";
+const publicStoreColumns =
+  "id, name, slug, category, description, whatsapp_phone, address, logo_url, brand_color, is_active, store_json";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object";
@@ -168,9 +170,7 @@ function mapProductsWithImages(
 export async function getStores() {
   const { data: stores, error } = await supabase
     .from("stores")
-    .select(
-      "id, name, slug, category, description, address, logo_url, brand_color, is_active, store_json",
-    )
+    .select(publicStoreColumns)
     .eq("is_active", true)
     .order("name", { ascending: true });
 
@@ -219,9 +219,7 @@ export async function getStoreBySlug(slug: string) {
   const normalizedSlug = normalizeStoreSlug(slug);
   const { data, error } = await supabase
     .from("stores")
-    .select(
-      "id, name, slug, category, description, address, logo_url, brand_color, is_active, store_json",
-    )
+    .select(publicStoreColumns)
     .eq("slug", slug)
     .eq("is_active", true)
     .maybeSingle();
@@ -242,9 +240,7 @@ export async function getStoreBySlug(slug: string) {
     if (alias?.store_id) {
       const { data: aliasedStore, error: aliasedStoreError } = await supabase
         .from("stores")
-        .select(
-          "id, name, slug, category, description, address, logo_url, brand_color, is_active, store_json",
-        )
+        .select(publicStoreColumns)
         .eq("id", alias.store_id)
         .eq("is_active", true)
         .maybeSingle();
@@ -256,9 +252,7 @@ export async function getStoreBySlug(slug: string) {
   if (!store) {
     const { data: stores, error: storesError } = await supabase
       .from("stores")
-      .select(
-        "id, name, slug, category, description, address, logo_url, brand_color, is_active, store_json",
-      )
+      .select(publicStoreColumns)
       .eq("is_active", true);
 
     if (storesError) {
