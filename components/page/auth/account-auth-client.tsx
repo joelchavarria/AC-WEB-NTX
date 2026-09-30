@@ -9,6 +9,10 @@ import { supabase } from "@/lib/supabase";
 
 type Mode = "login" | "signup";
 
+const AUTH_CONFIRMATION_URL =
+  process.env.NEXT_PUBLIC_AUTH_CONFIRMATION_URL?.trim() ||
+  "https://ondie.devtester.lat/auth/confirmada";
+
 const copyByMode: Record<Mode, { title: string; description: string; action: string; success: string }> = {
   login: {
     title: "Inicia sesion",
@@ -80,7 +84,7 @@ export function AccountAuthClient() {
             email: email.trim(),
             password,
             options: {
-              emailRedirectTo: typeof window !== "undefined" ? `${window.location.origin}/auth/confirmada` : undefined,
+              emailRedirectTo: AUTH_CONFIRMATION_URL,
               data: { audience: "customer" },
             },
           });
