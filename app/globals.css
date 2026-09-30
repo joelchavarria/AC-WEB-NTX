@@ -1200,9 +1200,6 @@ h2 {
   .store-footer {
     padding-left: 12px;
   }
-  .featured-store:nth-child(n + 4) {
-    display: none;
-  }
 }
 
 /* Selected ONDIE store */
