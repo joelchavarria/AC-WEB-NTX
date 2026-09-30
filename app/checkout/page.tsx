@@ -12,8 +12,6 @@ export default async function CheckoutPage() {
         slug: store.slug,
         phone: store.whatsapp_phone ?? "",
         category: store.category ?? "Tienda local",
-        paymentMethods: store.store_json?.paymentMethods ?? [],
-        paymentAccounts: store.store_json?.paymentAccounts ?? [],
         cashEnabled:
           store.store_json?.profile_settings?.cashEnabled ?? true,
         deliveryMethods:

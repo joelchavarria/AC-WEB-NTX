@@ -80,7 +80,7 @@ export function AccountAuthClient() {
             email: email.trim(),
             password,
             options: {
-              emailRedirectTo: typeof window !== "undefined" ? `${window.location.origin}/account` : undefined,
+              emailRedirectTo: typeof window !== "undefined" ? `${window.location.origin}/auth/confirmada` : undefined,
               data: { audience: "customer" },
             },
           });

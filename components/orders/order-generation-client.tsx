@@ -8,7 +8,6 @@ import {
   ArrowRight,
   Bank,
   Check,
-  Copy,
   Info,
   LockKey,
   MagnifyingGlass,
@@ -40,17 +39,7 @@ type Contacts = Record<
     slug: string;
     phone: string;
     category: string;
-    paymentMethods: string[];
     cashEnabled: boolean;
-    paymentAccounts: Array<{
-      bankName: string;
-      accountHolder?: string;
-      accountNumber?: string;
-      cci?: string;
-      accountType?: string;
-      walletLabel?: string;
-      walletNumber?: string;
-    }>;
     deliveryMethods: Array<{
       id: string;
       name: string;
@@ -203,14 +192,6 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
   const catalogHref = exclusiveStore
     ? `/catalogo/${exclusiveStore.storeSlug}`
     : "/";
-
-  async function copyValue(value: string) {
-    if (!value.trim()) {
-      return;
-    }
-
-    await navigator.clipboard.writeText(value);
-  }
 
   function messageFor(group: OrderGroup) {
     const lines = group.items
@@ -605,99 +586,12 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
                   <span>
                     <strong>Pago directo y transparente</strong>
                     <small>
-                      ONDIE no procesa cobros. La tienda te compartirá sus datos
-                      y confirmará tu pago.
+                      ONDIE no procesa cobros. La tienda te compartirá las
+                      instrucciones de pago y confirmará tu pedido.
                     </small>
                   </span>
                 </div>
               </section>
-              {payment === "transfer"
-                ? displayGroups.map((group) => {
-                    const paymentAccounts =
-                      contacts[group.storeId]?.paymentAccounts ?? [];
-                    const paymentMethods =
-                      contacts[group.storeId]?.paymentMethods ?? [];
-
-                    if (!paymentAccounts.length && !paymentMethods.length) {
-                      return null;
-                    }
-
-                    return (
-                      <section
-                        className="order-card"
-                        key={`${group.storeId}-payment-accounts`}
-                      >
-                        <h2>Cuentas del negocio para tu pago</h2>
-                        <p className="section-helper">
-                          Datos registrados por {group.storeName} para recibir
-                          transferencias o pagos directos.
-                        </p>
-                        <div className="payment-store-heading">
-                          <strong>{group.storeName}</strong>
-                          <small>
-                            {contacts[group.storeId]?.category ??
-                              "Tienda local"}
-                          </small>
-                        </div>
-                        {paymentMethods.length ? (
-                          <div className="payment-method-tags">
-                            {paymentMethods.map((method) => (
-                              <span key={method}>{method}</span>
-                            ))}
-                          </div>
-                        ) : null}
-                        <div className="payment-account-list">
-                          {paymentAccounts.map((account, index) => (
-                            <article
-                              className="payment-account-card"
-                              key={`${group.storeId}-account-${index}`}
-                            >
-                              <div className="payment-account-copy">
-                                <strong>{account.bankName}</strong>
-                                {account.accountHolder ? (
-                                  <span>Titular: {account.accountHolder}</span>
-                                ) : null}
-                                {account.accountType ? (
-                                  <span>Tipo: {account.accountType}</span>
-                                ) : null}
-                                {account.accountNumber ? (
-                                  <span>
-                                    N de cuenta: {account.accountNumber}
-                                  </span>
-                                ) : null}
-                                {account.cci ? (
-                                  <span>CCI: {account.cci}</span>
-                                ) : null}
-                                {account.walletLabel || account.walletNumber ? (
-                                  <span>
-                                    {account.walletLabel ?? "Billetera"}:{" "}
-                                    {account.walletNumber ?? ""}
-                                  </span>
-                                ) : null}
-                              </div>
-                              <div className="payment-account-actions">
-                                {account.accountType ? (
-                                  <small>{account.accountType}</small>
-                                ) : null}
-                                {account.accountNumber ? (
-                                  <button
-                                    type="button"
-                                    aria-label={`Copiar cuenta de ${account.bankName}`}
-                                    onClick={() =>
-                                      void copyValue(account.accountNumber!)
-                                    }
-                                  >
-                                    <Copy />
-                                  </button>
-                                ) : null}
-                              </div>
-                            </article>
-                          ))}
-                        </div>
-                      </section>
-                    );
-                  })
-                : null}
             </div>
             <aside className="order-summary-column">
               <section className="order-summary-card">

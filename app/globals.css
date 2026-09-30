@@ -3246,8 +3246,29 @@ h2 {
 }
 @media (max-width: 768px) {
   .store-hours-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
+    padding: 12px;
+  }
+  .store-hours-cell {
+    align-items: flex-start;
+    min-height: 78px;
+    padding: 10px;
+  }
+  .cell-day {
+    font-size: 0.76rem;
+  }
+  .cell-time {
+    font-size: 0.74rem;
+    line-height: 1.35;
+  }
+  .cell-badge-open,
+  .cell-badge-closed {
+    position: static;
+    align-self: flex-start;
+    margin-top: 2px;
+    font-size: 0.56rem;
+    padding: 2px 6px;
   }
 }
 @media (max-width: 480px) {
@@ -3256,27 +3277,27 @@ h2 {
     border-radius: 12px;
   }
   .store-hours-toggle {
-    padding: 12px 14px;
+    padding: 13px 14px;
   }
   .hours-toggle-label {
-    font-size: 0.72rem;
+    font-size: 0.74rem;
   }
   .hours-toggle-status {
-    font-size: 0.76rem;
+    font-size: 0.82rem;
   }
   .store-hours-grid {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
-    padding: 10px 10px;
+    gap: 8px;
+    padding: 10px;
   }
   .store-hours-cell {
-    padding: 6px 4px;
+    min-height: 76px;
+    padding: 9px 8px;
   }
   .cell-day {
-    font-size: 0.62rem;
+    font-size: 0.74rem;
   }
   .cell-time {
-    font-size: 0.6rem;
+    font-size: 0.72rem;
   }
 }
 
@@ -4216,87 +4237,6 @@ h2 {
   font-size: 0.6rem;
   line-height: 1.45;
 }
-.payment-store-heading {
-  display: grid;
-  gap: 2px;
-  margin-bottom: 12px;
-}
-.payment-store-heading strong {
-  font-size: 0.76rem;
-}
-.payment-store-heading small {
-  color: #7a879a;
-  font-size: 0.62rem;
-}
-.payment-method-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 14px;
-}
-.payment-method-tags span {
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: #eef2ff;
-  color: #142fe3;
-  font-size: 0.6rem;
-  font-weight: 800;
-}
-.payment-account-list {
-  display: grid;
-  gap: 12px;
-}
-.payment-account-card {
-  display: flex;
-  justify-content: space-between;
-  gap: 14px;
-  padding: 15px;
-  border: 1px solid #e6ebf2;
-  border-radius: 13px;
-  background: #fbfcff;
-}
-.payment-account-copy {
-  display: grid;
-  gap: 4px;
-}
-.payment-account-copy strong {
-  font-size: 0.74rem;
-}
-.payment-account-copy span {
-  color: #5f6d83;
-  font-size: 0.64rem;
-  line-height: 1.45;
-}
-.payment-account-actions {
-  display: grid;
-  align-content: space-between;
-  justify-items: end;
-  gap: 10px;
-}
-.payment-account-actions small {
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: #eef2ff;
-  color: #142fe3;
-  font-size: 0.58rem;
-  font-weight: 800;
-  white-space: nowrap;
-}
-.payment-account-actions button {
-  width: 38px;
-  height: 38px;
-  border: 1px solid #dce2ec;
-  border-radius: 10px;
-  background: white;
-  color: #142fe3;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-}
-.payment-account-actions button svg {
-  width: 18px;
-  height: 18px;
-}
 .order-summary-column {
   position: sticky;
   top: 18px;
@@ -4714,12 +4654,6 @@ h2 {
   .delivery-options {
     grid-template-columns: 1fr;
   }
-  .payment-account-card {
-    flex-direction: column;
-  }
-  .payment-account-actions {
-    justify-items: start;
-  }
   .order-store-summary > header {
     grid-template-columns: 42px 1fr;
     align-items: start;
@@ -4932,3 +4866,144 @@ h2 {
 .legal-page p { line-height: 1.75; margin: 16px 0; }
 .legal-page .legal-date { color: #626276; font-size: 14px; }
 .legal-page a { color: #2d2af5; text-decoration: underline; }
+
+.auth-confirmation-page {
+  min-height: calc(100vh - 76px);
+  display: grid;
+  place-items: center;
+  position: relative;
+  overflow: hidden;
+  padding: 48px 20px 84px;
+  background: #0b0b35;
+  color: #101126;
+}
+.auth-confirmation-shell {
+  width: min(100%, 540px);
+  position: relative;
+  z-index: 1;
+}
+.auth-confirmation-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 22px;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 900;
+  letter-spacing: 0.2em;
+}
+.auth-confirmation-brand-mark {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: #d5ff22;
+  color: #0b0b35;
+  font-size: 1.4rem;
+  letter-spacing: -0.08em;
+  box-shadow: 0 12px 30px rgba(213, 255, 34, 0.26);
+}
+.auth-confirmation-card {
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  padding: 42px 38px 34px;
+  border: 1px solid rgba(213, 255, 34, 0.24);
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+.auth-confirmation-card.is-error .auth-confirmation-icon { color: #dc2626; background: #fff1f1; }
+.auth-confirmation-icon {
+  width: 76px;
+  height: 76px;
+  display: grid;
+  place-items: center;
+  border-radius: 24px;
+  background: #edff85;
+  color: #059669;
+}
+.auth-confirmation-icon svg { width: 42px; height: 42px; }
+.auth-confirmation-eyebrow {
+  margin-top: 4px;
+  color: #2d2af5;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.auth-confirmation-card h1 {
+  max-width: 430px;
+  font-size: clamp(2rem, 6vw, 3.25rem);
+  line-height: 0.98;
+  letter-spacing: -0.06em;
+}
+.auth-confirmation-description {
+  max-width: 420px;
+  color: #667085;
+  line-height: 1.6;
+}
+.auth-confirmation-primary {
+  width: 100%;
+  min-height: 54px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin-top: 4px;
+  border: 0;
+  border-radius: 15px;
+  background: #2d2af5;
+  color: white;
+  cursor: pointer;
+  font-weight: 900;
+  box-shadow: 0 16px 30px rgba(45, 42, 245, 0.25);
+}
+.auth-confirmation-primary:hover { background: #0000bf; }
+.auth-confirmation-primary svg { width: 20px; height: 20px; }
+.auth-confirmation-help {
+  width: 100%;
+  padding: 18px;
+  border: 1px solid #e4e6f0;
+  border-radius: 18px;
+  background: #f8f9ff;
+  text-align: left;
+}
+.auth-confirmation-help strong { display: block; color: #101126; font-size: 0.9rem; }
+.auth-confirmation-help p { margin-top: 5px; color: #667085; font-size: 0.82rem; line-height: 1.5; }
+.auth-confirmation-downloads { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 14px; }
+.auth-confirmation-downloads a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 11px;
+  border: 1px solid #d6dcf0;
+  border-radius: 11px;
+  color: #2d2af5;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+.auth-confirmation-downloads a svg { width: 15px; height: 15px; }
+.auth-confirmation-downloads a svg:last-child { margin-left: 2px; width: 12px; height: 12px; }
+.auth-confirmation-steps { display: grid; gap: 12px; margin: 16px 0 0; padding: 0; list-style: none; }
+.auth-confirmation-steps li { display: flex; align-items: flex-start; gap: 10px; text-align: left; }
+.auth-confirmation-steps li > span { display: grid; place-items: center; flex: 0 0 24px; width: 24px; height: 24px; border-radius: 999px; background: #d5ff22; color: #101126; font-size: 0.75rem; font-weight: 900; }
+.auth-confirmation-steps li strong { display: block; color: #101126; font-size: 0.84rem; }
+.auth-confirmation-steps li small { display: block; margin-top: 2px; color: #667085; font-size: 0.78rem; line-height: 1.4; }
+.auth-confirmation-store-note { margin-top: 16px !important; padding-top: 12px; border-top: 1px solid #e7e9f0; color: #8a92a7 !important; font-size: 0.75rem !important; }
+.auth-confirmation-web-link { color: #2d2af5; font-size: 0.86rem; font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
+.auth-confirmation-footnote { max-width: 430px; color: #8a92a7; font-size: 0.72rem; line-height: 1.5; }
+.auth-confirmation-orb { position: absolute; border-radius: 999px; filter: blur(2px); opacity: 0.72; }
+.auth-confirmation-orb-one { width: 360px; height: 360px; top: -140px; left: -130px; background: rgba(45, 42, 245, 0.32); }
+.auth-confirmation-orb-two { width: 460px; height: 460px; right: -220px; bottom: -220px; background: rgba(213, 255, 34, 0.2); }
+
+@media (max-width: 520px) {
+  .auth-confirmation-page { min-height: calc(100vh - 112px); padding: 28px 14px 48px; }
+  .auth-confirmation-card { padding: 32px 20px 26px; border-radius: 24px; }
+  .auth-confirmation-card h1 { font-size: clamp(2rem, 11vw, 2.7rem); }
+  .auth-confirmation-downloads { display: grid; grid-template-columns: 1fr; }
+  .auth-confirmation-downloads a { justify-content: center; }
+}

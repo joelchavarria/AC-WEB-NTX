@@ -57,15 +57,6 @@ export type Store = {
     };
     heroImage?: string;
     paymentMethods?: string[];
-    paymentAccounts?: Array<{
-      bankName: string;
-      accountHolder?: string;
-      accountNumber?: string;
-      cci?: string;
-      accountType?: string;
-      walletLabel?: string;
-      walletNumber?: string;
-    }>;
   } | null;
   products?: Product[];
 };

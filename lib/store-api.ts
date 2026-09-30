@@ -65,9 +65,6 @@ function sanitizePublicStoreJson(value: unknown): Store["store_json"] {
     accent: stringValue(value.accent),
     heroImage: stringValue(value.heroImage),
     paymentMethods,
-    // Legacy JSON may contain account numbers. Public payment accounts are
-    // attached only from the RLS-filtered table below.
-    paymentAccounts: [],
     profile_settings: {
       brandColor: stringValue(profile.brandColor),
       hours: stringValue(profile.hours),
@@ -80,42 +77,6 @@ function sanitizePublicStoreJson(value: unknown): Store["store_json"] {
       deliveryMethods,
     },
   };
-}
-
-async function attachPublicPaymentAccounts<T extends Store>(stores: T[]) {
-  const ids = stores.map((store) => store.id);
-  if (!ids.length) return stores;
-  const { data, error } = await supabase
-    .from("store_bank_accounts")
-    .select(
-      "store_id, bank_name, account_holder, account_number, account_type, currency",
-    )
-    .in("store_id", ids)
-    .eq("is_public", true)
-    .order("created_at", { ascending: true });
-  if (error)
-    throw new Error("No se pudieron cargar los métodos de pago públicos.");
-  const accountsByStore = new Map<
-    string,
-    NonNullable<Store["store_json"]>["paymentAccounts"]
-  >();
-  for (const account of data ?? []) {
-    const accounts = accountsByStore.get(account.store_id) ?? [];
-    accounts.push({
-      bankName: account.bank_name,
-      accountHolder: account.account_holder ?? undefined,
-      accountNumber: account.account_number,
-      accountType: account.account_type ?? undefined,
-    });
-    accountsByStore.set(account.store_id, accounts);
-  }
-  return stores.map((store) => ({
-    ...store,
-    store_json: {
-      ...sanitizePublicStoreJson(store.store_json),
-      paymentAccounts: accountsByStore.get(store.id) ?? [],
-    },
-  }));
 }
 
 function mapProductsWithImages(
@@ -178,12 +139,11 @@ export async function getStores() {
     throw new Error("No se pudo cargar la lista de tiendas.");
   }
 
-  const storeList = await attachPublicPaymentAccounts(
-    ((stores ?? []) as Store[]).map((store) => ({
-      ...store,
-      slug: normalizeStoreSlug(store.slug || store.name),
-    })),
-  );
+  const storeList = ((stores ?? []) as Store[]).map((store) => ({
+    ...store,
+    slug: normalizeStoreSlug(store.slug || store.name),
+    store_json: sanitizePublicStoreJson(store.store_json),
+  }));
 
   if (storeList.length === 0) {
     return storeList;
@@ -272,7 +232,10 @@ export async function getStoreBySlug(slug: string) {
     return null;
   }
 
-  store = (await attachPublicPaymentAccounts([store]))[0] ?? store;
+  store = {
+    ...store,
+    store_json: sanitizePublicStoreJson(store.store_json),
+  };
 
   const { data: products, error: productsError } = await supabase
     .from("products")
