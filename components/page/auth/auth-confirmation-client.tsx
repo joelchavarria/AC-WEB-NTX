@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { CheckCircle, Rocket, WarningCircle } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 
@@ -106,12 +105,6 @@ export function AuthConfirmationClient() {
             )}
           </div>
 
-          <Link href="/account" className="auth-confirmation-web-link">
-            Continuar en la web
-          </Link>
-          <p className="auth-confirmation-footnote">
-            Si abriste este enlace en otro dispositivo, instala ONDIE allí o continúa en la web para acceder a tu cuenta.
-          </p>
         </div>
       </section>
     </main>

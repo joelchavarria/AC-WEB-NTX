@@ -4994,8 +4994,6 @@ h2 {
 .auth-confirmation-steps li strong { display: block; color: #101126; font-size: 0.84rem; }
 .auth-confirmation-steps li small { display: block; margin-top: 2px; color: #667085; font-size: 0.78rem; line-height: 1.4; }
 .auth-confirmation-store-note { margin-top: 16px !important; padding-top: 12px; border-top: 1px solid #e7e9f0; color: #8a92a7 !important; font-size: 0.75rem !important; }
-.auth-confirmation-web-link { color: #2d2af5; font-size: 0.86rem; font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
-.auth-confirmation-footnote { max-width: 430px; color: #8a92a7; font-size: 0.72rem; line-height: 1.5; }
 .auth-confirmation-orb { position: absolute; border-radius: 999px; filter: blur(2px); opacity: 0.72; }
 .auth-confirmation-orb-one { width: 360px; height: 360px; top: -140px; left: -130px; background: rgba(45, 42, 245, 0.32); }
 .auth-confirmation-orb-two { width: 460px; height: 460px; right: -220px; bottom: -220px; background: rgba(213, 255, 34, 0.2); }
