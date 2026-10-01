@@ -35,21 +35,26 @@ Deno.serve(async (req) => {
     return respond({ error: "Method not allowed" }, 405);
 
   const authorization = req.headers.get("authorization");
+  const webhookSecret = Deno.env.get("ORDER_WEBHOOK_SECRET")?.trim();
+  const internalWebhookCall = Boolean(
+    webhookSecret &&
+      req.headers.get("x-ondie-webhook-secret") === webhookSecret,
+  );
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!supabaseUrl || !serviceRoleKey)
     return respond({ error: "Missing Supabase env" }, 500);
-  if (!authorization?.match(/^Bearer\s+\S+$/i))
+  if (!internalWebhookCall && !authorization?.match(/^Bearer\s+\S+$/i))
     return respond({ error: "Authentication required" }, 401);
 
-  const accessToken = authorization.replace(/^Bearer\s+/i, "").trim();
+  const accessToken = authorization?.replace(/^Bearer\s+/i, "").trim() ?? "";
   const supabase = createClient(supabaseUrl, serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
   // The web server uses the service role only for this trusted internal call.
   // Every other caller must provide a valid user JWT and is checked as an owner.
-  const internalServiceCall = accessToken === serviceRoleKey;
+  const internalServiceCall = internalWebhookCall || accessToken === serviceRoleKey;
   let authenticatedUserId: string | null = null;
   if (!internalServiceCall) {
     const {
