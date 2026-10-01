@@ -1,7 +1,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.56.0";
 import { getCorsHeaders } from "../_shared/cors.ts";
 
-type Payload = { orderId?: string; orderIds?: string[] };
+type Payload = {
+  orderId?: string;
+  orderIds?: string[];
+  record?: { id?: string };
+};
 
 const MAX_ORDER_IDS = 50;
 const EXPO_BATCH_SIZE = 100;
@@ -14,6 +18,12 @@ type ExpoMessage = {
   title: string;
   body: string;
   data: Record<string, string | number | null>;
+};
+
+type ExpoTicket = {
+  status?: "ok" | "error";
+  message?: string;
+  details?: { error?: string };
 };
 
 Deno.serve(async (req) => {
@@ -131,23 +141,75 @@ Deno.serve(async (req) => {
   if (!messages.length)
     return respond({ sent: 0, reason: "no_valid_expo_tokens" });
 
+  let sentCount = 0;
+  let failedCount = 0;
   for (let start = 0; start < messages.length; start += EXPO_BATCH_SIZE) {
+    const batch = messages.slice(start, start + EXPO_BATCH_SIZE);
+    const expoAccessToken = Deno.env.get("EXPO_ACCESS_TOKEN")?.trim();
+    const headers: Record<string, string> = {
+      Accept: "application/json",
+      "Accept-Encoding": "gzip, deflate",
+      "Content-Type": "application/json",
+    };
+    if (expoAccessToken) {
+      headers.Authorization = `Bearer ${expoAccessToken}`;
+    }
     const response = await fetch("https://exp.host/--/api/v2/push/send", {
       method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Accept-Encoding": "gzip, deflate",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(messages.slice(start, start + EXPO_BATCH_SIZE)),
+      headers,
+      body: JSON.stringify(batch),
     });
     if (!response.ok) {
       console.error("Push provider request failed", response.status);
       return respond({ error: "Push delivery failed" }, 502);
     }
+    let result: { data?: ExpoTicket[] };
+    try {
+      result = (await response.json()) as { data?: ExpoTicket[] };
+    } catch {
+      return respond({ error: "Invalid push provider response" }, 502);
+    }
+    const tickets = Array.isArray(result.data) ? result.data : [];
+    const failedTokens = tickets
+      .map((ticket, index) => ({ ticket, token: batch[index]?.to }))
+      .filter(
+        ({ ticket }) =>
+          ticket.status === "error" &&
+          ticket.details?.error === "DeviceNotRegistered",
+      )
+      .map(({ token }) => token)
+      .filter((token): token is string => Boolean(token));
+    if (failedTokens.length) {
+      await supabase.from("push_tokens").delete().in("token", failedTokens);
+    }
+    const failedTickets = tickets.filter((ticket) => ticket.status === "error");
+    if (tickets.length !== batch.length) {
+      return respond({ error: "Invalid push provider response" }, 502);
+    }
+    sentCount += tickets.length - failedTickets.length;
+    failedCount += failedTickets.length;
+    if (failedTickets.length) {
+      console.error(
+        "Push provider rejected notifications",
+        failedTickets.map((ticket) => ({
+          message: ticket.message,
+          error: ticket.details?.error,
+        })),
+      );
+    }
+    if (failedTickets.length === batch.length) {
+      return respond(
+        {
+          error: "Push delivery failed",
+          sent: sentCount,
+          failed: failedCount,
+        },
+        502,
+      );
+    }
   }
 
-  return respond({ sent: messages.length });
+  return respond({ sent: sentCount, failed: failedCount });
 });
 
 const Expo = {
@@ -164,12 +226,24 @@ function parseOrderIds(payload: unknown): string[] {
   const body = payload as Record<string, unknown>;
   const rawOrderIds = body.orderIds;
   const rawOrderId = body.orderId;
+  const rawRecord = body.record;
   if (rawOrderIds !== undefined && !Array.isArray(rawOrderIds)) return [];
   if (rawOrderId !== undefined && typeof rawOrderId !== "string") return [];
+  if (
+    rawRecord !== undefined &&
+    (!rawRecord || typeof rawRecord !== "object" || Array.isArray(rawRecord))
+  )
+    return [];
+  const recordId =
+    rawRecord && typeof rawRecord === "object" && !Array.isArray(rawRecord)
+      ? (rawRecord as Record<string, unknown>).id
+      : undefined;
+  if (recordId !== undefined && typeof recordId !== "string") return [];
 
   const values = [
     ...(Array.isArray(rawOrderIds) ? rawOrderIds : []),
     ...(rawOrderId === undefined ? [] : [rawOrderId]),
+    ...(recordId === undefined ? [] : [recordId]),
   ];
   if (
     values.some(
@@ -188,7 +262,8 @@ function requestedOrderCount(payload: unknown): number {
   const body = payload as Record<string, unknown>;
   return (
     (Array.isArray(body.orderIds) ? body.orderIds.length : 0) +
-    (body.orderId === undefined ? 0 : 1)
+    (body.orderId === undefined ? 0 : 1) +
+    (body.record && typeof body.record === "object" ? 1 : 0)
   );
 }
 

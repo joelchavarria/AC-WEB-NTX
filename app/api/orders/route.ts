@@ -416,11 +416,17 @@ export async function POST(request: Request) {
   const orderIds = orders.map((o: { id: string }) => o.id);
 
   if (orderIds.length && supabase.functions?.invoke) {
-    const { error: notifyError } = await supabase.functions.invoke(
+    const { data: notificationResult, error: notifyError } = await supabase.functions.invoke(
       "send-order-notification",
       { body: { orderIds } },
     );
-    if (notifyError) console.error("Notification delivery failed");
+    if (notifyError) {
+      console.error("Notification delivery failed", {
+        message: notifyError.message,
+      });
+    } else if (notificationResult?.failed) {
+      console.error("Some notifications were rejected", notificationResult);
+    }
   }
   return NextResponse.json(
     {
