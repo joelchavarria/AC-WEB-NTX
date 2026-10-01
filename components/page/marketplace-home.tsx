@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, Bag, CaretRight, ForkKnife, Heart, House, MagnifyingGlass, Package, Palette, ShoppingCart, Sneaker, Sparkle, Storefront, TShirt, UserCircle } from "@phosphor-icons/react";
+import { ArrowRight, Bag, CaretLeft, CaretRight, ForkKnife, Heart, House, MagnifyingGlass, Package, Palette, ShoppingCart, Sneaker, Sparkle, Storefront, TShirt, UserCircle } from "@phosphor-icons/react";
 import { CartSummary } from "@/components/cart/cart-summary";
 import { clearExclusiveStoreContext } from "@/lib/cart";
 import type { Store } from "@/lib/supabase";
@@ -22,6 +22,8 @@ const categoryIcons: Record<string, typeof TShirt> = {
   "arte y diseno": Palette,
 };
 
+const STORES_PER_PAGE = 4;
+
 function normalizeCategory(value: string) {
   return value
     .toLowerCase()
@@ -38,6 +40,7 @@ export function MarketplaceHome({ stores, error }: { stores: Store[]; error: str
   const [query, setQuery] = useState("");
   const [favorite, setFavorite] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const visibleStores = stores;
 
   useEffect(() => {
@@ -62,11 +65,25 @@ export function MarketplaceHome({ stores, error }: { stores: Store[]; error: str
       return matchesCategory && matchesSearch;
     });
   }, [query, selectedCategory, visibleStores]);
+  const totalPages = Math.max(1, Math.ceil(filteredStores.length / STORES_PER_PAGE));
+  const pageForDisplay = Math.min(currentPage, totalPages);
+  const paginatedStores = useMemo(() => {
+    const start = (pageForDisplay - 1) * STORES_PER_PAGE;
+    return filteredStores.slice(start, start + STORES_PER_PAGE);
+  }, [filteredStores, pageForDisplay]);
+  const updateQuery = (value: string) => {
+    setQuery(value);
+    setCurrentPage(1);
+  };
+  const updateCategory = (category: string) => {
+    setSelectedCategory(category);
+    setCurrentPage(1);
+  };
 
   return <main className="marketplace-page">
     <header className="market-header">
       <Link className="market-brand" href="/" aria-label="ONDIE, inicio"><Image src="/ondie-logo.png" alt="ONDIE" width={1051} height={310} priority /></Link>
-      <label className="market-search"><MagnifyingGlass aria-hidden="true" /><input aria-label="Buscar productos o tiendas" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar productos o tiendas..." /></label>
+      <label className="market-search"><MagnifyingGlass aria-hidden="true" /><input aria-label="Buscar productos o tiendas" value={query} onChange={(event) => updateQuery(event.target.value)} placeholder="Buscar productos o tiendas..." /></label>
       <nav className="market-nav" aria-label="Navegación principal"><a href="#stores">Tiendas</a></nav>
       <div className="header-actions"><CartSummary /><Link href="/account" className="profile-button" aria-label="Mi cuenta"><UserCircle weight="bold" /></Link></div>
     </header>
@@ -74,8 +91,8 @@ export function MarketplaceHome({ stores, error }: { stores: Store[]; error: str
     <div className="market-layout">
       <aside className="category-sidebar" id="categories">
         <p className="sidebar-title">Categorías</p>
-        <div className="category-list">{categories.map(({ label, normalized, icon: Icon }) => <button key={label} type="button" className={selectedCategory === normalized ? "active" : ""} onClick={() => setSelectedCategory(normalized)}><Icon weight="duotone" /><span>{titleCase(label)}</span><CaretRight /></button>)}</div>
-        <button className="all-categories" type="button" onClick={() => { setQuery(""); setSelectedCategory(""); }}>Ver todas <ArrowRight /></button>
+        <div className="category-list">{categories.map(({ label, normalized, icon: Icon }) => <button key={label} type="button" className={selectedCategory === normalized ? "active" : ""} onClick={() => updateCategory(normalized)}><Icon weight="duotone" /><span>{titleCase(label)}</span><CaretRight /></button>)}</div>
+        <button className="all-categories" type="button" onClick={() => { updateQuery(""); updateCategory(""); }}>Ver todas <ArrowRight /></button>
         <div className="seller-card"><span><Bag weight="duotone" /></span><strong>Únete al colectivo</strong><p>Haz visible tu tienda y llega a más personas.</p><a href="mailto:hola@ondie.com">Quiero vender</a></div>
       </aside>
 
@@ -89,13 +106,22 @@ export function MarketplaceHome({ stores, error }: { stores: Store[]; error: str
         <section className="featured-section" id="stores">
           <div className="featured-head"><div><span className="section-kicker">NUESTRO COLECTIVO</span><h2>Tiendas en ONDIE</h2><p>Descubre negocios locales y conoce lo que cada uno tiene para ofrecerte.</p></div><span className="store-count">{filteredStores.length} {filteredStores.length === 1 ? "tienda" : "tiendas"}</span></div>
           {error ? <p className="data-note">No fue posible cargar las tiendas: {error}</p> : null}
-          <div className="featured-grid">{filteredStores.slice(0, 4).map((store, index) => <article className={`featured-store store-tone-${index % 4}`} key={store.id}>
+          <div className="featured-grid">{paginatedStores.map((store, index) => <article className={`featured-store store-tone-${index % 4}`} key={store.id}>
             <Link href={`/stores/${store.slug}`} className="store-visual" aria-label={`Visitar ${store.name}`}>{store.logo_url || store.products?.[0]?.image ? <Image src={store.logo_url ?? store.products?.[0]?.image ?? ""} alt={`Portada de ${store.name}`} fill sizes="(max-width: 760px) 100vw, 25vw" /> : null}<span className="store-badge">Tienda local</span></Link>
             <div className="store-info"><div className="store-avatar">{store.logo_url ? <Image src={store.logo_url} alt="" width={34} height={34} /> : <Storefront weight="fill" />}</div><div><h3>{store.name}</h3><p>{store.category ?? "Tienda local"}</p></div><button type="button" onClick={() => setFavorite(favorite === store.id ? null : store.id)} aria-label="Guardar tienda" className={favorite === store.id ? "is-favorite" : ""}><Heart weight={favorite === store.id ? "fill" : "regular"} /></button></div>
             <p className="store-description">{store.description ?? store.store_json?.description ?? "Una tienda local con productos seleccionados para nuestra comunidad."}</p>
             <div className="store-footer"><span>{store.products?.[0]?.name ?? "Catálogo disponible"}</span><span>{store.products?.length ?? 0} productos</span></div>
           </article>)}</div>
-          {filteredStores.length === 0 ? <div className="empty-stores"><MagnifyingGlass /><h3>{query ? "No encontramos coincidencias" : "Aún no hay tiendas publicadas"}</h3><p>{query ? "Prueba otra búsqueda o explora todas las categorías." : "Las tiendas activas aparecerán aquí automáticamente desde la base de datos."}</p>{query ? <button onClick={() => setQuery("")} type="button">Limpiar búsqueda</button> : null}</div> : null}
+          {totalPages > 1 ? <nav className="catalog-pagination marketplace-pagination" aria-label="Paginación de tiendas">
+            <button type="button" className="catalog-pagination-button" onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} disabled={pageForDisplay === 1} aria-label="Página anterior">
+              <CaretLeft weight="bold" /><span>Anterior</span>
+            </button>
+            <span className="catalog-pagination-status" aria-live="polite">Página {pageForDisplay} de {totalPages}</span>
+            <button type="button" className="catalog-pagination-button" onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))} disabled={pageForDisplay === totalPages} aria-label="Página siguiente">
+              <span>Siguiente</span><CaretRight weight="bold" />
+            </button>
+          </nav> : null}
+          {filteredStores.length === 0 ? <div className="empty-stores"><MagnifyingGlass /><h3>{query ? "No encontramos coincidencias" : "Aún no hay tiendas publicadas"}</h3><p>{query ? "Prueba otra búsqueda o explora todas las categorías." : "Las tiendas activas aparecerán aquí automáticamente desde la base de datos."}</p>{query ? <button onClick={() => updateQuery("")} type="button">Limpiar búsqueda</button> : null}</div> : null}
         </section>
 
         <section className="trust-strip"><div><Package weight="duotone" /><span><strong>Catálogos diversos</strong><small>Todo el colectivo en un solo lugar</small></span></div><div><ShoppingCart weight="duotone" /><span><strong>Compra directa</strong><small>Elige fácil y de forma segura</small></span></div><div><Storefront weight="duotone" /><span><strong>Impacto local</strong><small>Apoya negocios de tu comunidad</small></span></div></section>
