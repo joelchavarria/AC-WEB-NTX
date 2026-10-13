@@ -1,4 +1,9 @@
 export const metadata = { robots: { index: false, follow: true } };
+// The checkout must resolve current store contacts at request time. If this
+// route is statically generated, newly created or recently updated stores can
+// be missing from the contacts map and appear to have no WhatsApp number.
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 import { OrderGenerationClient } from "@/components/orders/order-generation-client";
 import { getStores } from "@/lib/store-api";
