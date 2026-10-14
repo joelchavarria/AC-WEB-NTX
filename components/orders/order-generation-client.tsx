@@ -262,6 +262,7 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
 
     submissionLock.current = true;
     setIsSaving(true);
+    const retryStorageKey = "ondie-checkout-attempt";
 
     try {
       const requestBody = JSON.stringify({
@@ -287,7 +288,6 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
         })),
       });
       // Keep the same key after a timeout or page reload. A changed cart gets a new key.
-      const retryStorageKey = "ondie-checkout-attempt";
       const signature = Array.from(
         new Uint8Array(
           await crypto.subtle.digest(
@@ -361,6 +361,15 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
           "Tu pedido ya esta listo para enviarse por WhatsApp.",
       });
     } catch (error) {
+      if (
+        error instanceof Error &&
+        [
+          "CHECKOUT_IDEMPOTENCY_PAYLOAD_MISMATCH",
+          "CHECKOUT_INVENTORY_CONFLICT",
+        ].includes(error.name)
+      ) {
+        window.sessionStorage.removeItem(retryStorageKey);
+      }
       showNotice({
         tone: "error",
         category: "checkout",

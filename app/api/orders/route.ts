@@ -396,9 +396,14 @@ export async function POST(request: Request) {
       const message = expectedMessages.has(orderError.message)
         ? orderError.message
         : "El pedido cambió mientras lo confirmábamos. Revisa tu carrito e inténtalo nuevamente.";
+      const isIdempotencyPayloadMismatch =
+        orderError.message ===
+        "Este intento de compra ya tiene otros datos. Revisa el carrito.";
       const code =
         message === "Selecciona opciones válidas para cada producto."
           ? "CHECKOUT_VARIANT_OPTIONS_INVALID"
+          : isIdempotencyPayloadMismatch
+            ? "CHECKOUT_IDEMPOTENCY_PAYLOAD_MISMATCH"
           : orderError.code === "P4090"
             ? "CHECKOUT_INVENTORY_CONFLICT"
             : "CHECKOUT_VALIDATION_FAILED";
