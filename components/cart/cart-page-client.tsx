@@ -20,11 +20,14 @@ import {
 } from "@phosphor-icons/react";
 import { CartSummary } from "@/components/cart/cart-summary";
 import {
+  CART_STORE_NOTES_MAX_LENGTH,
   clearCart,
   readCart,
+  readCartStoreOptions,
   readExclusiveStoreContext,
   removeFromCart,
   subscribeToCart,
+  updateCartStoreOptions,
   updateCartQuantity,
   variantKey,
   writeCart,
@@ -34,6 +37,7 @@ import {
 
 export function CartPageClient() {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [storeOptions, setStoreOptions] = useState(readCartStoreOptions);
   const [exclusiveStore, setExclusiveStore] = useState<ExclusiveStoreContext | null>(null);
   useEffect(() => {
     const sync = () => {
@@ -47,6 +51,7 @@ export function CartPageClient() {
 
       setExclusiveStore(context);
       setItems(scopedCart);
+      setStoreOptions(readCartStoreOptions());
     };
     sync();
     return subscribeToCart(sync);
@@ -220,6 +225,29 @@ export function CartPageClient() {
                         </button>
                       </article>
                     ))}
+                    <div className="cart-store-options">
+                      <label className="cart-note-field">
+                        <span>
+                          <strong>Nota para {group.storeName}</strong>
+                          <small>Ej.: sin sal, poca azúcar o indicaciones especiales</small>
+                        </span>
+                        <textarea
+                          value={storeOptions[group.storeId]?.notes ?? ""}
+                          onChange={(event) => {
+                            updateCartStoreOptions(group.storeId, {
+                              notes: event.target.value,
+                            });
+                            setStoreOptions(readCartStoreOptions());
+                          }}
+                          maxLength={CART_STORE_NOTES_MAX_LENGTH}
+                          placeholder="Escribe una nota para la tienda (opcional)"
+                          rows={3}
+                        />
+                        <small className="cart-note-counter">
+                          {(storeOptions[group.storeId]?.notes ?? "").length}/{CART_STORE_NOTES_MAX_LENGTH}
+                        </small>
+                      </label>
+                    </div>
                     <footer>
                       <span>Subtotal {group.storeName}</span>
                       <strong>C$ {subtotal.toLocaleString("es-NI")}</strong>

@@ -9,9 +9,15 @@ export type CartItem = Product & {
   variantOptions?: Record<string, string>;
 };
 
+export type CartStoreOptions = {
+  notes: string;
+};
+
 const CART_KEY = "ca-web-cart";
 const CART_UPDATED_EVENT = "ca-web-cart-updated";
 const EXCLUSIVE_STORE_KEY = "ca-web-exclusive-store";
+const CART_STORE_OPTIONS_KEY = "ca-web-cart-store-options";
+export const CART_STORE_NOTES_MAX_LENGTH = 250;
 
 export type ExclusiveStoreContext = {
   storeId: string;
@@ -110,6 +116,50 @@ export function writeCart(items: CartItem[]) {
   window.dispatchEvent(new Event(CART_UPDATED_EVENT));
 }
 
+export function readCartStoreOptions() {
+  if (typeof window === "undefined") return {} as Record<string, CartStoreOptions>;
+
+  const value = window.localStorage.getItem(CART_STORE_OPTIONS_KEY);
+  if (!value) return {} as Record<string, CartStoreOptions>;
+
+  try {
+    const saved = JSON.parse(value) as Record<string, Partial<CartStoreOptions>>;
+    return Object.fromEntries(
+      Object.entries(saved).flatMap(([storeId, options]) => {
+        if (!storeId || !options || typeof options !== "object") return [];
+        const notes = typeof options.notes === "string"
+          ? options.notes.slice(0, CART_STORE_NOTES_MAX_LENGTH)
+          : "";
+        return [[storeId, {
+          notes,
+        } satisfies CartStoreOptions]];
+      }),
+    );
+  } catch {
+    window.localStorage.removeItem(CART_STORE_OPTIONS_KEY);
+    return {} as Record<string, CartStoreOptions>;
+  }
+}
+
+export function updateCartStoreOptions(
+  storeId: string,
+  values: Partial<CartStoreOptions>,
+) {
+  const current = readCartStoreOptions();
+  const next = {
+    ...current,
+    [storeId]: {
+      notes: (values.notes ?? current[storeId]?.notes ?? "").slice(0, CART_STORE_NOTES_MAX_LENGTH),
+    },
+  };
+  window.localStorage.setItem(CART_STORE_OPTIONS_KEY, JSON.stringify(next));
+  window.dispatchEvent(new Event(CART_UPDATED_EVENT));
+}
+
+function clearCartStoreOptions() {
+  window.localStorage.removeItem(CART_STORE_OPTIONS_KEY);
+}
+
 export function addToCart(item: CartItem) {
   const exclusiveStore = readExclusiveStoreContext();
   const cart = exclusiveStore && exclusiveStore.storeId !== item.storeId ? [] : readCart();
@@ -128,10 +178,14 @@ export function addToCart(item: CartItem) {
 
 export function clearCart() {
   writeCart([]);
+  clearCartStoreOptions();
 }
 
 export function removeStoreFromCart(storeId: string) {
   writeCart(readCart().filter((item) => item.storeId !== storeId));
+  const options = readCartStoreOptions();
+  delete options[storeId];
+  window.localStorage.setItem(CART_STORE_OPTIONS_KEY, JSON.stringify(options));
 }
 
 export function updateCartQuantity(productId: string, storeId: string, quantity: number, variantOptions?: Record<string, string>) {

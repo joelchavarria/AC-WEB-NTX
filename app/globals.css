@@ -3649,6 +3649,50 @@ h2 {
 .cart-store-group > footer strong {
   font-size: 0.88rem;
 }
+.cart-store-options {
+  padding: 16px 20px;
+  display: grid;
+  gap: 15px;
+  border-bottom: 1px solid #e8ecf3;
+  background: #fbfcff;
+}
+.cart-note-field > span {
+  display: grid;
+  gap: 3px;
+}
+.cart-note-field strong {
+  font-size: 0.72rem;
+}
+.cart-note-field small {
+  color: #748095;
+  font-size: 0.63rem;
+  line-height: 1.4;
+}
+.cart-note-field {
+  display: grid;
+  gap: 7px;
+}
+.cart-note-field textarea {
+  width: 100%;
+  min-height: 74px;
+  padding: 10px 12px;
+  resize: vertical;
+  border: 1px solid #dce2ec;
+  border-radius: 10px;
+  background: white;
+  color: #17213a;
+  font: inherit;
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+.cart-note-field textarea:focus {
+  outline: 2px solid rgba(20, 47, 227, 0.17);
+  border-color: #879aff;
+}
+.cart-note-counter {
+  justify-self: end;
+  margin-top: -3px;
+}
 .cart-whatsapp-note {
   min-height: 90px;
   border: 1px solid #dfe4f3;
@@ -4166,6 +4210,17 @@ h2 {
 .whatsapp-submit-card h2 {
   margin-bottom: 18px;
   font-size: 1rem;
+}
+.order-store-request {
+  margin-top: 10px;
+  padding: 9px 10px;
+  display: grid;
+  gap: 4px;
+  border-radius: 9px;
+  background: #f5f7ff;
+  color: #53627a;
+  font-size: 0.63rem;
+  line-height: 1.4;
 }
 .order-field {
   display: grid;

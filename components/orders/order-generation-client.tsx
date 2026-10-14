@@ -23,6 +23,7 @@ import {
 import { CartSummary } from "@/components/cart/cart-summary";
 import { useNoticeCenter } from "@/components/page/feedback/notice-center";
 import {
+  readCartStoreOptions,
   clearCart,
   readCart,
   readExclusiveStoreContext,
@@ -79,6 +80,7 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
   const [storeDeliveryMethods, setStoreDeliveryMethods] = useState<
     Record<string, string>
   >({});
+  const [storeOptions, setStoreOptions] = useState(readCartStoreOptions);
   const [submitted, setSubmitted] = useState(false);
   const [preparedGroups, setPreparedGroups] = useState<OrderGroup[]>([]);
   const [preparedOrders, setPreparedOrders] = useState<PreparedOrder[]>([]);
@@ -102,6 +104,7 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
 
       setExclusiveStore(context);
       setItems(scopedCart);
+      setStoreOptions(readCartStoreOptions());
     };
     sync();
     const saved = window.localStorage.getItem(LAST_OPENED_ORDER_KEY);
@@ -218,7 +221,11 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
       deliveryMethod === "store_delivery"
         ? Number(deliveryOption?.fee) || 0
         : 0;
-    return `Hola ${group.storeName}, quiero confirmar mi pedido${orderNumber ? ` ORD-${orderNumber}` : ""} generado desde ONDIE:\n\n${lines}\n\nSubtotal: C$ ${subtotal.toLocaleString("es-NI")}\nEnvío: C$ ${fee.toLocaleString("es-NI")}\nTotal: C$ ${(subtotal + fee).toLocaleString("es-NI")}\nCliente: ${name}\nWhatsApp: ${phone}\nEntrega: ${deliveryLabel}\nPago: ${payment === "transfer" ? "Transferencia / depósito" : "Efectivo"}`;
+    const options = storeOptions[group.storeId];
+    const requestDetails = options?.notes?.trim()
+      ? `Nota: ${options.notes.trim()}`
+      : "";
+    return `Hola ${group.storeName}, quiero confirmar mi pedido${orderNumber ? ` ORD-${orderNumber}` : ""} generado desde ONDIE:\n\n${lines}\n\nSubtotal: C$ ${subtotal.toLocaleString("es-NI")}\nEnvío: C$ ${fee.toLocaleString("es-NI")}\nTotal: C$ ${(subtotal + fee).toLocaleString("es-NI")}\nCliente: ${name}\nWhatsApp: ${phone}\nEntrega: ${deliveryLabel}\nPago: ${payment === "transfer" ? "Transferencia / depósito" : "Efectivo"}${requestDetails ? `\n${requestDetails}` : ""}`;
   }
 
   function markWhatsAppOpened(group: OrderGroup) {
@@ -270,6 +277,7 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
         groups: groups.map((group) => ({
           storeId: group.storeId,
           deliveryOptionId: selectedStoreMethod(group.storeId)?.id,
+          notes: storeOptions[group.storeId]?.notes?.trim() ?? "",
           items: group.items.map((item) => ({
             id: item.id,
             price: item.price,
@@ -642,6 +650,11 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
                         <em>x{item.quantity}</em>
                       </div>
                     ))}
+                    {storeOptions[group.storeId]?.notes ? (
+                      <div className="order-store-request">
+                        <span>📝 {storeOptions[group.storeId].notes}</span>
+                      </div>
+                    ) : null}
                   </div>
                 ))}
                 <div className="order-total-row">

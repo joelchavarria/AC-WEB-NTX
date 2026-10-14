@@ -16,6 +16,7 @@ type OrderRequest = {
   groups: Array<{
     storeId: string;
     deliveryOptionId?: string;
+    notes?: string;
     items: Array<{
       id: string;
       name: string;
@@ -101,7 +102,8 @@ function isOrderRequest(value: unknown): value is OrderRequest {
       !group.items.length ||
       group.items.length > 100 ||
       (group.deliveryOptionId !== undefined &&
-        !text(group.deliveryOptionId, 100))
+        !text(group.deliveryOptionId, 100)) ||
+      (group.notes !== undefined && !text(group.notes, 250))
     )
       return false;
     stores.add(group.storeId);
@@ -345,6 +347,7 @@ export async function POST(request: Request) {
       .map((group) => ({
         storeId: group.storeId,
         deliveryOptionId: group.deliveryOptionId ?? null,
+        notes: group.notes?.trim() ?? "",
         items: [...group.items]
           .sort((a, b) => a.id.localeCompare(b.id))
           .map((item) => ({
