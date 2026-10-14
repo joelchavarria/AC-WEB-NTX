@@ -107,13 +107,21 @@ function isOrderRequest(value: unknown): value is OrderRequest {
     )
       return false;
     stores.add(group.storeId);
-    const products = new Set<string>();
+    const productLines = new Set<string>();
     return group.items.every((item) => {
+      if (!item || typeof item !== "object" || Array.isArray(item)) {
+        return false;
+      }
+      const variantKey = JSON.stringify(
+        Object.entries(item.variantOptions ?? {}).sort(([a], [b]) =>
+          a.localeCompare(b),
+        ),
+      );
+      const lineKey = `${item.id}:${variantKey}`;
       if (
-        !item ||
         !text(item.id, 36) ||
         !uuid.test(item.id) ||
-        products.has(item.id) ||
+        productLines.has(lineKey) ||
         !Number.isInteger(item.quantity) ||
         item.quantity < 1 ||
         item.quantity > 999 ||
@@ -123,7 +131,7 @@ function isOrderRequest(value: unknown): value is OrderRequest {
         !validVariantOptions(item.variantOptions)
       )
         return false;
-      products.add(item.id);
+      productLines.add(lineKey);
       return true;
     });
   });

@@ -19,8 +19,24 @@ const body = {
   groups: [
     {
       storeId,
+      notes: "Sin azúcar, por favor",
       deliveryOptionId: "managua",
-      items: [{ id: productId, quantity: 1, price: 0.01, name: "Forged" }],
+      items: [
+        {
+          id: productId,
+          quantity: 1,
+          price: 0.01,
+          name: "Forged",
+          variantOptions: { Talla: "M" },
+        },
+        {
+          id: productId,
+          quantity: 1,
+          price: 0.01,
+          name: "Forged",
+          variantOptions: { Talla: "L" },
+        },
+      ],
     },
   ],
 };
@@ -106,8 +122,13 @@ assert.equal(response.status, 200);
 assert.equal(calls[0].name, "consume_checkout_rate_limits");
 assert.equal(calls[1].name, "create_checkout");
 assert.deepEqual(calls[1].args.p_payload.groups[0].items, [
-  { id: productId, quantity: 1, variant_options: {} },
+  { id: productId, quantity: 1, variant_options: { Talla: "M" } },
+  { id: productId, quantity: 1, variant_options: { Talla: "L" } },
 ]);
+assert.equal(
+  calls[1].args.p_payload.groups[0].notes,
+  "Sin azúcar, por favor",
+);
 assert.equal(calls[0].args.p_client_keys.length, 3);
 assert.ok(
   calls[0].args.p_client_keys.every((key) => /^[0-9a-f]{64}$/.test(key)),
