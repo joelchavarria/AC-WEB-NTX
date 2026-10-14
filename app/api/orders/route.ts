@@ -387,6 +387,7 @@ export async function POST(request: Request) {
       "Completa la dirección de entrega.",
       "El método de envío ya no está disponible.",
       "Configuración de envío inválida.",
+      "Este intento de compra ya tiene otros datos. Revisa el carrito.",
     ]);
     const isExpected =
       orderError.code === "P4000" ||

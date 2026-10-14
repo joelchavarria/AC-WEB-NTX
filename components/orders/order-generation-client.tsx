@@ -306,40 +306,62 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
       } catch {
         /* Ignore invalid local state. */
       }
-      const requestKey =
+      let requestKey =
         previous?.signature === signature && previous.key
           ? previous.key
           : crypto.randomUUID();
-      window.sessionStorage.setItem(
-        retryStorageKey,
-        JSON.stringify({ signature, key: requestKey }),
-      );
-      const response = await fetch("/api/orders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Idempotency-Key": requestKey,
-          "X-Device-ID": getCheckoutDeviceId(),
-        },
-        body: requestBody,
-      });
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => null);
-        const checkoutError = new Error(
-          data?.error ?? "No fue posible guardar el pedido.",
-        ) as CheckoutError;
-        checkoutError.reportable = data?.reportable === true;
-        checkoutError.name = data?.code ?? "CHECKOUT_REQUEST_FAILED";
-        throw checkoutError;
-      }
-
-      const data = (await response.json().catch(() => null)) as {
+      let data: {
         orders?: PreparedOrder[];
         message?: string;
         reportable?: boolean;
         code?: string;
-      } | null;
+      } | null = null;
+
+      // A previous browser tab can leave an idempotency key tied to an older
+      // payload. The database rejects that key before creating any order, so
+      // it is safe to retry once with a fresh key instead of making the
+      // customer recover manually.
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        window.sessionStorage.setItem(
+          retryStorageKey,
+          JSON.stringify({ signature, key: requestKey }),
+        );
+        const response = await fetch("/api/orders", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Idempotency-Key": requestKey,
+            "X-Device-ID": getCheckoutDeviceId(),
+          },
+          body: requestBody,
+        });
+        const responseData: {
+          orders?: PreparedOrder[];
+          message?: string;
+          reportable?: boolean;
+          code?: string;
+          error?: string;
+        } | null = await response.json().catch(() => null);
+        data = responseData;
+
+        if (response.ok) break;
+
+        if (
+          responseData?.code === "CHECKOUT_IDEMPOTENCY_PAYLOAD_MISMATCH" &&
+          attempt === 0
+        ) {
+          window.sessionStorage.removeItem(retryStorageKey);
+          requestKey = crypto.randomUUID();
+          continue;
+        }
+
+        const checkoutError = new Error(
+          responseData?.error ?? "No fue posible guardar el pedido.",
+        ) as CheckoutError;
+        checkoutError.reportable = responseData?.reportable === true;
+        checkoutError.name = responseData?.code ?? "CHECKOUT_REQUEST_FAILED";
+        throw checkoutError;
+      }
 
       if (!data?.orders || data.orders.length !== groups.length) {
         const checkoutError = new Error(
