@@ -232,6 +232,11 @@ export function StorefrontClient({
   ) => {
     setSelectedProduct(product);
     setSelectedImageIndex(0);
+    setVariantSelections(
+      cartItems.find(
+        (item) => item.id === product.id && item.storeId === store.id,
+      )?.variantOptions ?? {},
+    );
   };
 
   useEffect(() => {
@@ -285,7 +290,6 @@ export function StorefrontClient({
     if (!selectedProduct) return;
 
     setSelectedImageIndex(0);
-    setVariantSelections({});
 
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") setSelectedProduct(null);
