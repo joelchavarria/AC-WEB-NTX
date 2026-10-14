@@ -28,10 +28,9 @@ import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { CartSummary } from "@/components/cart/cart-summary";
 import {
   clearExclusiveStoreContext,
-  addToCart,
   readCart,
   subscribeToCart,
-  updateCartQuantity,
+  variantKey,
   writeExclusiveStoreContext,
   type CartItem,
 } from "@/lib/cart";
@@ -134,6 +133,7 @@ export function StorefrontClient({
     NonNullable<Store["products"]>[number] | null
   >(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [variantSelections, setVariantSelections] = useState<Record<string, string>>({});
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [themeApplying, setThemeApplying] = useState(exclusive);
@@ -218,6 +218,14 @@ export function StorefrontClient({
         : [],
     [cartItems, selectedProduct, store.id],
   );
+  const allVariantsSelected =
+    variantGroups.length > 0 &&
+    variantGroups.every((group) => Boolean(variantSelections[group.name]));
+  const selectedVariantQuantity = selectedProduct
+    ? selectedProductCartItems.find(
+        (item) => variantKey(item.variantOptions) === variantKey(variantSelections),
+      )?.quantity ?? 0
+    : 0;
 
   const openProductDetails = (
     product: NonNullable<Store["products"]>[number],
@@ -277,6 +285,7 @@ export function StorefrontClient({
     if (!selectedProduct) return;
 
     setSelectedImageIndex(0);
+    setVariantSelections({});
 
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") setSelectedProduct(null);
@@ -790,65 +799,47 @@ export function StorefrontClient({
                   {variantGroups.map((group) => (
                     <div className="product-variant-group" key={group.name}>
                       <strong>{group.name}</strong>
-                      <ul className="product-variant-values">
-                        {group.values.map((value) => {
-                          const variantOptions = { [group.name]: value };
-                          const variantQuantity = selectedProductCartItems.reduce(
-                            (total, item) =>
-                              total +
-                              (item.variantOptions?.[group.name] === value
-                                ? item.quantity
-                                : 0),
-                            0,
-                          );
-
-                          return (
-                            <li className="product-variant-row" key={value}>
-                              <span className="product-variant-name">{value}</span>
-                              <div className="product-variant-stepper" aria-label={`${group.name}: ${value}`}>
-                                <button
-                                  type="button"
-                                  className="product-variant-stepper-button"
-                                  aria-label={`Reducir ${value}`}
-                                  disabled={variantQuantity === 0}
-                                  onClick={() =>
-                                    updateCartQuantity(
-                                      selectedProduct.id,
-                                      store.id,
-                                      variantQuantity - 1,
-                                      variantOptions,
-                                    )
-                                  }
-                                >
-                                  −
-                                </button>
-                                <span className="product-variant-count" aria-live="polite">
-                                  {variantQuantity}
-                                </span>
-                                <button
-                                  type="button"
-                                  className="product-variant-stepper-button product-variant-stepper-button--add"
-                                  aria-label={`Aumentar ${value}`}
-                                  onClick={() =>
-                                    addToCart({
-                                      ...selectedProduct,
-                                      storeId: store.id,
-                                      storeName: store.name,
-                                      storeSlug: store.slug,
-                                      variantOptions,
-                                      quantity: 1,
-                                    })
-                                  }
-                                >
-                                  +
-                                </button>
-                              </div>
-                            </li>
-                          );
-                        })}
-                      </ul>
+                      <div className="product-variant-choice-list">
+                        {group.values.map((value) => (
+                          <button
+                            type="button"
+                            key={value}
+                            className={
+                              variantSelections[group.name] === value ? "active" : ""
+                            }
+                            aria-pressed={variantSelections[group.name] === value}
+                            onClick={() =>
+                              setVariantSelections((current) => ({
+                                ...current,
+                                [group.name]: value,
+                              }))
+                            }
+                          >
+                            {value}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   ))}
+                  <p
+                    className={`product-selection-status ${
+                      allVariantsSelected ? "ready" : "pending"
+                    }`}
+                    aria-live="polite"
+                  >
+                    {allVariantsSelected
+                      ? `Combinación seleccionada${selectedVariantQuantity ? ` · ${selectedVariantQuantity} en carrito` : ""}`
+                      : "Selecciona una opción en cada grupo para agregar el producto."}
+                  </p>
+                  <AddToCartButton
+                    product={selectedProduct}
+                    storeId={store.id}
+                    storeName={store.name}
+                    storeSlug={store.slug}
+                    variantOptions={variantSelections}
+                    disabled={!allVariantsSelected}
+                    disabledLabel="Selecciona las opciones"
+                  />
                 </div>
               ) : null}
               {selectedProductCartItems.length ? (

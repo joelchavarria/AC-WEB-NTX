@@ -28,6 +28,7 @@ import {
   readCart,
   readExclusiveStoreContext,
   subscribeToCart,
+  variantKey,
   writeCart,
   type CartItem,
   type ExclusiveStoreContext,
@@ -636,7 +637,10 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
                       </Link>
                     </header>
                     {group.items.map((item) => (
-                      <div className="order-product" key={item.id}>
+                      <div
+                        className="order-product"
+                        key={`${item.storeId}-${item.id}-${variantKey(item.variantOptions)}`}
+                      >
                         <div>
                           {item.image ? (
                             <Image
@@ -654,6 +658,13 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
                           <small>
                             {item.description ?? "Producto de catálogo"}
                           </small>
+                          {Object.entries(item.variantOptions ?? {}).map(
+                            ([name, value]) => (
+                              <small key={`${name}-${value}`}>
+                                {name}: {value}
+                              </small>
+                            ),
+                          )}
                           <b>C$ {item.price.toLocaleString("es-NI")}</b>
                         </span>
                         <em>x{item.quantity}</em>

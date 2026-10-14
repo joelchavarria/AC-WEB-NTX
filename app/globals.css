@@ -2293,82 +2293,30 @@ h2 {
   color: #26334a;
   font-size: 0.84rem;
 }
-.product-variant-values {
-  display: grid;
-  gap: 7px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.product-variant-row {
+.product-variant-choice-list {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-height: 43px;
-  padding: 6px 9px 6px 13px;
-  border: 1px solid #d7deea;
-  border-radius: 11px;
-  color: #15243b;
-  background: #fff;
-}
-.product-variant-row:has(.product-variant-count:not(:empty)) {
-  border-color: #d2eadb;
-}
-.product-variant-name {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.82rem;
-  font-weight: 750;
-}
-.product-variant-stepper {
-  display: inline-flex;
-  align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
-  flex: 0 0 auto;
 }
-.product-variant-stepper-button {
-  display: inline-grid;
-  place-items: center;
-  width: 27px;
-  height: 27px;
-  padding: 0;
-  border: 1px solid #dce3ed;
-  border-radius: 999px;
-  color: #7b879b;
+.product-variant-choice-list button {
+  min-height: 38px;
+  padding: 7px 13px;
+  border: 1px solid #d7deea;
+  border-radius: 10px;
+  color: #52627b;
   background: #fff;
   cursor: pointer;
-  font-size: 1.15rem;
-  font-weight: 700;
-  line-height: 1;
+  font-size: 0.82rem;
+  font-weight: 750;
+  transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
 }
-.product-variant-stepper-button:hover:not(:disabled) {
+.product-variant-choice-list button:hover,
+.product-variant-choice-list button.active {
   border-color: var(--store-accent);
   color: var(--store-accent);
+  background: color-mix(in srgb, var(--store-accent) 9%, #fff);
 }
-.product-variant-stepper-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-.product-variant-stepper-button--add {
-  border-color: var(--store-accent);
-  color: #fff;
-  background: var(--store-accent);
-}
-.product-variant-stepper-button--add:hover {
-  color: #fff;
-  background: color-mix(in srgb, var(--store-accent) 85%, #000);
-}
-.product-variant-count {
-  min-width: 12px;
-  color: #15243b;
-  font-size: 0.88rem;
-  font-weight: 800;
-  text-align: center;
-}
-.product-variant-stepper-button:focus-visible,
+.product-variant-choice-list button:focus-visible,
 .product-modal-thumbnails button:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--store-accent) 32%, transparent);
   outline-offset: 2px;
