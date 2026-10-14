@@ -15,6 +15,7 @@ import {
   Package,
   ShareNetwork,
   ShieldCheck,
+  ShoppingCartSimple,
   SlidersHorizontal,
   SortAscending,
   Storefront,
@@ -27,7 +28,12 @@ import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { CartSummary } from "@/components/cart/cart-summary";
 import {
   clearExclusiveStoreContext,
+  addToCart,
+  readCart,
+  subscribeToCart,
+  updateCartQuantity,
   writeExclusiveStoreContext,
+  type CartItem,
 } from "@/lib/cart";
 import type { Store } from "@/lib/supabase";
 import { toWhatsAppNumber } from "@/lib/whatsapp";
@@ -128,9 +134,7 @@ export function StorefrontClient({
     NonNullable<Store["products"]>[number] | null
   >(null);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-  const [selectedVariants, setSelectedVariants] = useState<
-    Record<string, string>
-  >({});
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [themeApplying, setThemeApplying] = useState(exclusive);
   const categories = useMemo(
@@ -205,23 +209,21 @@ export function StorefrontClient({
   const variantGroups = (selectedProduct?.variant_options ?? []).filter(
     (group) => group.name.trim() && group.values.length,
   );
-  const variantsReady = variantGroups.every((group) =>
-    Boolean(selectedVariants[group.name]),
+  const selectedProductCartItems = useMemo(
+    () =>
+      selectedProduct
+        ? cartItems.filter(
+            (item) => item.id === selectedProduct.id && item.storeId === store.id,
+          )
+        : [],
+    [cartItems, selectedProduct, store.id],
   );
-  const missingVariantGroups = variantGroups.filter(
-    (group) => !selectedVariants[group.name],
-  );
-  const variantSelectionSummary = variantGroups
-    .filter((group) => selectedVariants[group.name])
-    .map((group) => `${group.name}: ${selectedVariants[group.name]}`)
-    .join(" · ");
 
   const openProductDetails = (
     product: NonNullable<Store["products"]>[number],
   ) => {
     setSelectedProduct(product);
     setSelectedImageIndex(0);
-    setSelectedVariants({});
   };
 
   useEffect(() => {
@@ -266,10 +268,15 @@ export function StorefrontClient({
   }, [exclusive, storeAccent]);
 
   useEffect(() => {
+    const syncCart = () => setCartItems(readCart());
+    syncCart();
+    return subscribeToCart(syncCart);
+  }, []);
+
+  useEffect(() => {
     if (!selectedProduct) return;
 
     setSelectedImageIndex(0);
-    setSelectedVariants({});
 
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") setSelectedProduct(null);
@@ -783,56 +790,87 @@ export function StorefrontClient({
                   {variantGroups.map((group) => (
                     <div className="product-variant-group" key={group.name}>
                       <strong>{group.name}</strong>
-                      <div className="product-variant-values">
-                        {group.values.map((value) => (
-                          <button
-                            type="button"
-                            key={value}
-                            className={
-                              selectedVariants[group.name] === value
-                                ? "active"
-                                : ""
-                            }
-                            aria-pressed={selectedVariants[group.name] === value}
-                            aria-label={`${group.name}: ${value}`}
-                            onClick={() =>
-                              setSelectedVariants((current) => ({
-                                ...current,
-                                [group.name]: value,
-                              }))
-                            }
-                          >
-                            {value}
-                          </button>
-                        ))}
-                      </div>
+                      <ul className="product-variant-values">
+                        {group.values.map((value) => {
+                          const variantOptions = { [group.name]: value };
+                          const variantQuantity = selectedProductCartItems.reduce(
+                            (total, item) =>
+                              total +
+                              (item.variantOptions?.[group.name] === value
+                                ? item.quantity
+                                : 0),
+                            0,
+                          );
+
+                          return (
+                            <li className="product-variant-row" key={value}>
+                              <span className="product-variant-name">{value}</span>
+                              <div className="product-variant-stepper" aria-label={`${group.name}: ${value}`}>
+                                <button
+                                  type="button"
+                                  className="product-variant-stepper-button"
+                                  aria-label={`Reducir ${value}`}
+                                  disabled={variantQuantity === 0}
+                                  onClick={() =>
+                                    updateCartQuantity(
+                                      selectedProduct.id,
+                                      store.id,
+                                      variantQuantity - 1,
+                                      variantOptions,
+                                    )
+                                  }
+                                >
+                                  −
+                                </button>
+                                <span className="product-variant-count" aria-live="polite">
+                                  {variantQuantity}
+                                </span>
+                                <button
+                                  type="button"
+                                  className="product-variant-stepper-button product-variant-stepper-button--add"
+                                  aria-label={`Aumentar ${value}`}
+                                  onClick={() =>
+                                    addToCart({
+                                      ...selectedProduct,
+                                      storeId: store.id,
+                                      storeName: store.name,
+                                      storeSlug: store.slug,
+                                      variantOptions,
+                                      quantity: 1,
+                                    })
+                                  }
+                                >
+                                  +
+                                </button>
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
                     </div>
                   ))}
                 </div>
               ) : null}
-              {variantGroups.length ? (
-                <p
-                  className={`product-selection-status ${variantsReady ? "ready" : "pending"}`}
-                  role="status"
+              {selectedProductCartItems.length ? (
+                <Link
+                  href="/cart"
+                  className="product-modal-cart-link"
+                  aria-label="Ver carrito"
+                  title="Ver carrito"
                 >
-                  {variantsReady
-                    ? `Seleccionado · ${variantSelectionSummary}`
-                    : `Falta seleccionar: ${missingVariantGroups.map((group) => group.name).join(" y ")}`}
-                </p>
+                  <ShoppingCartSimple weight="bold" />
+                  <span>Ver carrito</span>
+                  <ArrowRight weight="bold" />
+                </Link>
               ) : null}
-              <AddToCartButton
-                product={selectedProduct}
-                storeId={store.id}
-                storeName={store.name}
-                storeSlug={store.slug}
-                variantOptions={selectedVariants}
-                disabled={!variantsReady}
-                disabledLabel={
-                  missingVariantGroups.length
-                    ? `Selecciona ${missingVariantGroups.map((group) => group.name).join(" y ")}`
-                    : undefined
-                }
-              />
+              {variantGroups.length === 0 ? (
+                <AddToCartButton
+                  product={selectedProduct}
+                  storeId={store.id}
+                  storeName={store.name}
+                  storeSlug={store.slug}
+                />
+              ) : null}
             </div>
           </section>
         </div>

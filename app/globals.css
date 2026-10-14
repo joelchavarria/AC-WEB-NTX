@@ -2294,30 +2294,81 @@ h2 {
   font-size: 0.84rem;
 }
 .product-variant-values {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
-.product-variant-values button {
-  min-width: 42px;
-  padding: 9px 13px;
+.product-variant-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 43px;
+  padding: 6px 9px 6px 13px;
   border: 1px solid #d7deea;
-  border-radius: 10px;
-  color: #536079;
+  border-radius: 11px;
+  color: #15243b;
+  background: #fff;
+}
+.product-variant-row:has(.product-variant-count:not(:empty)) {
+  border-color: #d2eadb;
+}
+.product-variant-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+.product-variant-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+.product-variant-stepper-button {
+  display: inline-grid;
+  place-items: center;
+  width: 27px;
+  height: 27px;
+  padding: 0;
+  border: 1px solid #dce3ed;
+  border-radius: 999px;
+  color: #7b879b;
   background: #fff;
   cursor: pointer;
+  font-size: 1.15rem;
   font-weight: 700;
+  line-height: 1;
 }
-.product-variant-values button.active {
+.product-variant-stepper-button:hover:not(:disabled) {
   border-color: var(--store-accent);
   color: var(--store-accent);
-  background: color-mix(in srgb, var(--store-accent) 9%, #fff);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--store-accent) 16%, transparent);
 }
-.product-variant-values button:hover {
+.product-variant-stepper-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.product-variant-stepper-button--add {
   border-color: var(--store-accent);
+  color: #fff;
+  background: var(--store-accent);
 }
-.product-variant-values button:focus-visible,
+.product-variant-stepper-button--add:hover {
+  color: #fff;
+  background: color-mix(in srgb, var(--store-accent) 85%, #000);
+}
+.product-variant-count {
+  min-width: 12px;
+  color: #15243b;
+  font-size: 0.88rem;
+  font-weight: 800;
+  text-align: center;
+}
+.product-variant-stepper-button:focus-visible,
 .product-modal-thumbnails button:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--store-accent) 32%, transparent);
   outline-offset: 2px;
@@ -2372,6 +2423,38 @@ h2 {
 .product-selection-status.ready {
   color: #147a42;
   background: #edf9f1;
+}
+.product-modal-cart-link {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 0 13px;
+  margin: 0 0 16px;
+  border: 1px solid #bfe5cc;
+  border-radius: 12px;
+  color: #147a42;
+  font-size: 0.76rem;
+  font-weight: 800;
+  background: #f3fbf5;
+  text-decoration: none;
+}
+.product-modal-cart-link:hover {
+  color: #0f7f40;
+  background: #e7f6ec;
+}
+.product-modal-cart-link > svg {
+  width: 20px;
+  height: 20px;
+}
+.product-modal-cart-link > span {
+  white-space: nowrap;
+}
+.product-modal-cart-link > svg:last-child {
+  width: 16px;
+  height: 16px;
+  margin-left: auto;
 }
 .product-modal-copy .button {
   width: 100%;

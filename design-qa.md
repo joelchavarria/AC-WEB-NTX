@@ -1,36 +1,42 @@
-# Design QA — catálogo uniforme
+# Design QA — Modal de variaciones
 
-- Source visual truth: `/var/folders/3j/gl_js6xd24sd8_ww4k7sv3z80000gn/T/codex-clipboard-dfa03c9b-c431-4183-adba-113dd52d9485.png`
-- Implementation: `http://127.0.0.1:3002/stores/joyasalicia`
-- Implementation capture: browser capture from the local preview during this turn.
-- Viewport: implementation CSS viewport `3878 × 2181`, device pixel ratio `0.66`; source attachment was provided at `3144 × 1482` and displayed resized by the client.
-- State: desktop storefront catalog, product grid visible, no modal open.
+## Evidencia
+
+- Source visual truth: `/Users/jachavarria/.codex/generated_images/01a13795-7b4a-7351-a0c5-cb9da814214e/exec-cf8e5c2a-61e4-4a70-bf57-58b00b62e024.png`
+- Implementation: `http://localhost:3002/stores/postres-alice`, browser tab 9, modal de “Churros Mexicanos rellenos”.
+- Implementation screenshot: captured inline from the local browser bridge at the same desktop state; the bridge does not persist a local screenshot path.
+- State: `Cajeta 1`, `Dulce de leche 0`, `Leche condensada 1`, `Piña 0`, with “Ver carrito” visible and no bottom green quantity bar.
+- Viewport: desktop browser capture, approximately 1524 × 1100 CSS pixels. Source mockup: approximately 1475 × 1067 pixels. No density normalization was needed for the focused visual comparison.
 
 ## Comparison
 
-Full-view comparison focused on the catalog grid. The implementation keeps the same product-card pattern from the existing storefront while making the image slot and content block uniform. Focused DOM measurement confirmed all 11 cards at `507px` high and all image slots at `280px` high.
+### Full view
 
-Required fidelity surfaces:
+The implementation preserves the source composition: product imagery on the left, product details on the right, vertical filling rows, circular quantity controls, and a single “Ver carrito” action below the list.
 
-- Fonts and typography: existing storefront typography and hierarchy preserved; product titles are limited to two lines.
-- Spacing and layout rhythm: card image height, content minimum height, prices, statuses, and CTAs align consistently across the row.
-- Colors and visual tokens: existing card, status, border, and store-accent tokens preserved.
-- Image quality and asset fidelity: original product images are retained and cropped with `object-fit: cover` inside the fixed slot.
-- Copy and content: product names, descriptions, prices, stock labels, and actions remain unchanged.
+### Focused region
+
+The variation controls were checked against the source mockup. Each row exposes a disabled `−` button at zero, a visible quantity, and a blue `+` button. The local browser interaction was verified by increasing and reducing `Cajeta` and reducing `Leche condensada` to zero and back to one.
+
+## Required fidelity surfaces
+
+- Fonts and typography: hierarchy, bold product title, compact labels, and readable control text remain consistent with the existing modal.
+- Spacing and layout rhythm: variations are a single vertical list with consistent row height, compact gaps, and aligned steppers.
+- Colors and visual tokens: navy copy, blue increment buttons, light borders, and green cart link follow the existing ONDIE palette.
+- Image quality and asset fidelity: existing product image and thumbnails are preserved; icons use the existing Phosphor icon library.
+- Copy and content: `Relleno`, `Cajeta`, `Dulce de leche`, `Leche condensada`, `Piña`, and `Ver carrito` are present and legible.
 
 ## Findings
 
-- No actionable P0/P1/P2 findings remain for the requested card-uniformity change.
-- P3: the browser automation viewport differs from the source attachment dimensions, so this is a structural/focused comparison rather than a pixel-perfect overlay.
+No actionable P0, P1, or P2 differences found.
 
-## Implementation checklist
+## Interaction checks
 
-- [x] Fixed image area independent of source image dimensions.
-- [x] Equal-height card layout using flex columns.
-- [x] Consistent title and description line limits.
-- [x] Prices, stock labels, and buttons aligned to the card bottom.
-- [x] Responsive image and card dimensions preserved for mobile breakpoints.
-- [x] Pagination added at 12 products per page with previous/next controls.
-- [x] Build completed successfully.
+- `+` adds the selected variation as its own cart line and increments its quantity.
+- `−` decrements the selected variation and disables at zero.
+- “Ver carrito” remains the only supporting action below the variations.
+- No duplicate green “En carrito” product-level control is rendered for products with variations.
 
-final result: passed
+## Final result
+
+passed
