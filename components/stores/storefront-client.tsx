@@ -36,7 +36,10 @@ import {
 } from "@/lib/cart";
 import type { Store } from "@/lib/supabase";
 import { toWhatsAppNumber } from "@/lib/whatsapp";
-import { getProductAvailability } from "@/lib/product-availability";
+import {
+  getProductAvailability,
+  normalizeFulfillmentMode,
+} from "@/lib/product-availability";
 
 const DEFAULT_ACCENT = "#142fe3";
 const PRODUCTS_PER_PAGE = 12;
@@ -226,6 +229,34 @@ export function StorefrontClient({
         (item) => variantKey(item.variantOptions) === variantKey(variantSelections),
       )?.quantity ?? 0
     : 0;
+  const variantInventory = selectedProduct?.variant_inventory ?? [];
+  const hasVariantInventory = variantInventory.length > 0;
+  const selectedVariantAvailable =
+    normalizeFulfillmentMode(selectedProduct?.fulfillment_mode) !== "inmediato" ||
+    !hasVariantInventory ||
+    variantInventory.some(
+      (combination) =>
+        combination.enabled !== false &&
+        combination.stock > 0 &&
+        variantKey(combination.options) === variantKey(variantSelections),
+    );
+  const isVariantValueAvailable = (groupName: string, value: string) => {
+    if (
+      normalizeFulfillmentMode(selectedProduct?.fulfillment_mode) !== "inmediato" ||
+      !hasVariantInventory
+    ) {
+      return true;
+    }
+    const candidate = { [groupName]: value };
+    return variantInventory.some(
+      (combination) =>
+        combination.enabled !== false &&
+        combination.stock > 0 &&
+        Object.entries(candidate).every(
+          ([name, option]) => combination.options[name] === option,
+        ),
+    );
+  };
 
   const openProductDetails = (
     product: NonNullable<Store["products"]>[number],
@@ -808,6 +839,12 @@ export function StorefrontClient({
                           <button
                             type="button"
                             key={value}
+                            disabled={!isVariantValueAvailable(group.name, value)}
+                            title={
+                              isVariantValueAvailable(group.name, value)
+                                ? undefined
+                                : "Agotado"
+                            }
                             className={
                               variantSelections[group.name] === value ? "active" : ""
                             }
@@ -827,12 +864,16 @@ export function StorefrontClient({
                   ))}
                   <p
                     className={`product-selection-status ${
-                      allVariantsSelected ? "ready" : "pending"
+                      allVariantsSelected && selectedVariantAvailable
+                        ? "ready"
+                        : "pending"
                     }`}
                     aria-live="polite"
                   >
-                    {allVariantsSelected
+                    {allVariantsSelected && selectedVariantAvailable
                       ? `Combinación seleccionada${selectedVariantQuantity ? ` · ${selectedVariantQuantity} en carrito` : ""}`
+                      : allVariantsSelected
+                        ? "Esta combinación está agotada. Selecciona otra opción."
                       : "Selecciona una opción en cada grupo para agregar el producto."}
                   </p>
                   <AddToCartButton
@@ -841,8 +882,12 @@ export function StorefrontClient({
                     storeName={store.name}
                     storeSlug={store.slug}
                     variantOptions={variantSelections}
-                    disabled={!allVariantsSelected}
-                    disabledLabel="Selecciona las opciones"
+                    disabled={!allVariantsSelected || !selectedVariantAvailable}
+                    disabledLabel={
+                      allVariantsSelected && !selectedVariantAvailable
+                        ? "Combinación agotada"
+                        : "Selecciona las opciones"
+                    }
                   />
                 </div>
               ) : null}

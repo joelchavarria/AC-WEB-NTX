@@ -381,6 +381,7 @@ export async function POST(request: Request) {
       "El carrito contiene cantidades inválidas.",
       "Uno de los productos ya no está disponible.",
       "No hay suficientes existencias para completar el pedido.",
+      "No hay existencias suficientes para esa combinación.",
       "Selecciona opciones válidas para cada producto.",
       "La tienda no ofrece retiro en local.",
       "La tienda no acepta efectivo.",
@@ -403,15 +404,18 @@ export async function POST(request: Request) {
       const code =
         message === "Selecciona opciones válidas para cada producto."
           ? "CHECKOUT_VARIANT_OPTIONS_INVALID"
-          : isIdempotencyPayloadMismatch
+          : message === "No hay existencias suficientes para esa combinación."
+            ? "CHECKOUT_VARIANT_INVENTORY_CONFLICT"
+            : isIdempotencyPayloadMismatch
             ? "CHECKOUT_IDEMPOTENCY_PAYLOAD_MISMATCH"
-          : orderError.code === "P4090"
-            ? "CHECKOUT_INVENTORY_CONFLICT"
-            : "CHECKOUT_VALIDATION_FAILED";
+            : orderError.code === "P4090"
+              ? "CHECKOUT_INVENTORY_CONFLICT"
+              : "CHECKOUT_VALIDATION_FAILED";
       return userError(
         message,
         orderError.code === "P4090" ? 409 : 400,
-        code === "CHECKOUT_VARIANT_OPTIONS_INVALID",
+        code === "CHECKOUT_VARIANT_OPTIONS_INVALID" ||
+          code === "CHECKOUT_VARIANT_INVENTORY_CONFLICT",
         code,
       );
     }

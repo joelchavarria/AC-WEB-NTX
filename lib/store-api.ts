@@ -1,4 +1,9 @@
-import { supabase, type ProductVariantGroup, type Store } from "@/lib/supabase";
+import {
+  supabase,
+  type ProductVariantCombination,
+  type ProductVariantGroup,
+  type Store,
+} from "@/lib/supabase";
 import { normalizeStoreSlug } from "@/lib/store-slug";
 import { normalizeFulfillmentMode } from "@/lib/product-availability";
 const fallbackImage =
@@ -23,6 +28,30 @@ function normalizeVariantOptions(value: unknown): ProductVariantGroup[] {
       ? [...new Set(entry.values.map(stringValue).filter(Boolean) as string[])]
       : [];
     return name && values.length ? [{ name, values }] : [];
+  });
+}
+
+function normalizeVariantInventory(value: unknown): ProductVariantCombination[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((entry) => {
+    if (!isRecord(entry) || !isRecord(entry.options)) return [];
+    const options = Object.fromEntries(
+      Object.entries(entry.options).flatMap(([name, option]) => {
+        const normalizedName = stringValue(name);
+        const normalizedOption = stringValue(option);
+        return normalizedName && normalizedOption
+          ? [[normalizedName, normalizedOption]]
+          : [];
+      }),
+    );
+    if (!Object.keys(options).length) return [];
+    const stock = Number(entry.stock);
+    if (!Number.isFinite(stock) || stock < 0) return [];
+    return [{
+      options,
+      stock: Math.floor(stock),
+      enabled: entry.enabled !== false,
+    }];
   });
 }
 
@@ -98,6 +127,7 @@ function mapProductsWithImages(
       alt_text?: string | null;
     }> | null;
     variant_options?: unknown;
+    variant_inventory?: unknown;
   }>,
 ) {
   return products.map((product) => {
@@ -124,6 +154,7 @@ function mapProductsWithImages(
       images,
       image: images[0]?.image_url ?? fallbackImage,
       variant_options: normalizeVariantOptions(product.variant_options),
+      variant_inventory: normalizeVariantInventory(product.variant_inventory),
     };
   });
 }
@@ -152,7 +183,7 @@ export async function getStores() {
   const { data: products, error: productsError } = await supabase
     .from("products")
     .select(
-      "id, store_id, name, description, category, price, stock, fulfillment_mode, is_active, created_at, variant_options, product_images(id, image_url, sort_order, alt_text)",
+      "id, store_id, name, description, category, price, stock, fulfillment_mode, is_active, created_at, variant_options, variant_inventory, product_images(id, image_url, sort_order, alt_text)",
     )
     .eq("is_active", true);
 
@@ -240,7 +271,7 @@ export async function getStoreBySlug(slug: string) {
   const { data: products, error: productsError } = await supabase
     .from("products")
     .select(
-      "id, store_id, name, description, category, price, stock, fulfillment_mode, is_active, variant_options, product_images(id, image_url, sort_order, alt_text)",
+      "id, store_id, name, description, category, price, stock, fulfillment_mode, is_active, variant_options, variant_inventory, product_images(id, image_url, sort_order, alt_text)",
     )
     .eq("store_id", store.id)
     .eq("is_active", true)

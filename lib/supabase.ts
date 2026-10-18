@@ -76,6 +76,7 @@ export type Product = {
   is_active: boolean;
   created_at?: string;
   variant_options?: ProductVariantGroup[];
+  variant_inventory?: ProductVariantCombination[];
 };
 
 export type ProductImage = {
@@ -88,4 +89,10 @@ export type ProductImage = {
 export type ProductVariantGroup = {
   name: string;
   values: string[];
+};
+
+export type ProductVariantCombination = {
+  options: Record<string, string>;
+  stock: number;
+  enabled?: boolean;
 };

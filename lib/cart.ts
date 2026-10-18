@@ -68,12 +68,20 @@ type StoredCart = {
 
 function maxQuantity(item: CartItem) {
   return normalizeFulfillmentMode(item.fulfillment_mode) === "inmediato"
-    ? Math.max(0, item.stock)
+    ? Math.max(0, selectedVariantStock(item))
     : 99;
 }
 
 export function variantKey(options?: Record<string, string>) {
   return JSON.stringify(Object.entries(options ?? {}).sort(([a], [b]) => a.localeCompare(b)));
+}
+
+function selectedVariantStock(item: CartItem) {
+  if (!item.variant_inventory?.length) return item.stock;
+  const combination = item.variant_inventory.find(
+    (entry) => variantKey(entry.options) === variantKey(item.variantOptions),
+  );
+  return combination?.enabled === false ? 0 : combination?.stock ?? 0;
 }
 
 export function readCart() {
