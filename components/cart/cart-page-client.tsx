@@ -229,7 +229,6 @@ export function CartPageClient() {
                       <label className="cart-note-field">
                         <span>
                           <strong>Nota para {group.storeName}</strong>
-                          <small>Ej.: sin sal, poca azúcar o indicaciones especiales</small>
                         </span>
                         <textarea
                           value={storeOptions[group.storeId]?.notes ?? ""}
