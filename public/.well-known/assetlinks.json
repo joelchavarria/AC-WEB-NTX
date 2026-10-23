@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.jachavarria.ondie",
+      "sha256_cert_fingerprints": [
+        "97:24:AF:BA:5A:EA:EA:BC:A9:3F:42:44:80:74:B2:DB:29:88:D4:78:CE:2D:82:45:1C:F7:73:33:BB:2C:66:54"
+      ]
+    }
+  }
+]

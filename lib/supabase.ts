@@ -15,7 +15,10 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: true,
+    // Cada flujo que recibe credenciales desde una URL las valida explícitamente.
+    // Esto evita que el navegador consuma por error un enlace de recuperación
+    // antes de que la pantalla correspondiente pueda mostrar su resultado.
+    detectSessionInUrl: false,
   },
 });
 
