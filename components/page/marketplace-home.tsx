@@ -22,7 +22,9 @@ const categoryIcons: Record<string, typeof TShirt> = {
   "arte y diseno": Palette,
 };
 
-const STORES_PER_PAGE = 4;
+// Six stores make two complete rows on the desktop grid and avoid leaving a
+// single card stranded on the following page.
+const STORES_PER_PAGE = 6;
 
 function normalizeCategory(value: string) {
   return value
@@ -59,11 +61,16 @@ export function MarketplaceHome({ stores, error }: { stores: Store[]; error: str
   }, [visibleStores]);
   const filteredStores = useMemo(() => {
     const search = query.trim().toLowerCase();
-    return visibleStores.filter((store) => {
-      const matchesCategory = selectedCategory ? normalizeCategory(store.category ?? "") === selectedCategory : true;
-      const matchesSearch = search ? [store.name, store.category, store.description, store.store_json?.description].some((value) => value?.toLowerCase().includes(search)) : true;
-      return matchesCategory && matchesSearch;
-    });
+    return visibleStores
+      .filter((store) => {
+        const matchesCategory = selectedCategory ? normalizeCategory(store.category ?? "") === selectedCategory : true;
+        const matchesSearch = search ? [store.name, store.category, store.description, store.store_json?.description].some((value) => value?.toLowerCase().includes(search)) : true;
+        return matchesCategory && matchesSearch;
+      })
+      .sort((first, second) => {
+        const productDifference = (second.products?.length ?? 0) - (first.products?.length ?? 0);
+        return productDifference || first.name.localeCompare(second.name, "es");
+      });
   }, [query, selectedCategory, visibleStores]);
   const totalPages = Math.max(1, Math.ceil(filteredStores.length / STORES_PER_PAGE));
   const pageForDisplay = Math.min(currentPage, totalPages);
