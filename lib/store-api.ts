@@ -123,6 +123,7 @@ function mapProductsWithImages(
     product_images?: Array<{
       id?: string;
       image_url: string | null;
+      thumbnail_url?: string | null;
       sort_order?: number;
       alt_text?: string | null;
     }> | null;
@@ -137,6 +138,7 @@ function mapProductsWithImages(
       .map((image) => ({
         id: image.id,
         image_url: image.image_url as string,
+        thumbnail_url: image.thumbnail_url ?? null,
         sort_order: image.sort_order ?? 0,
         alt_text: image.alt_text ?? null,
       }));
@@ -153,6 +155,7 @@ function mapProductsWithImages(
       created_at: product.created_at,
       images,
       image: images[0]?.image_url ?? fallbackImage,
+      thumbnail: images[0]?.thumbnail_url ?? undefined,
       variant_options: normalizeVariantOptions(product.variant_options),
       variant_inventory: normalizeVariantInventory(product.variant_inventory),
     };
@@ -183,7 +186,7 @@ export async function getStores() {
   const { data: products, error: productsError } = await supabase
     .from("products")
     .select(
-      "id, store_id, name, description, category, price, stock, fulfillment_mode, is_active, created_at, variant_options, variant_inventory, product_images(id, image_url, sort_order, alt_text)",
+      "id, store_id, name, description, category, price, stock, fulfillment_mode, is_active, created_at, variant_options, variant_inventory, product_images(id, image_url, thumbnail_url, sort_order, alt_text)",
     )
     .eq("is_active", true);
 
@@ -200,10 +203,16 @@ export async function getStores() {
     productsByStore.set(product.store_id, current);
   }
 
-  return storeList.map((store) => ({
-    ...store,
-    products: productsByStore.get(store.id) ?? [],
-  }));
+  return storeList
+    .map((store) => ({
+      ...store,
+      products: productsByStore.get(store.id) ?? [],
+    }))
+    .sort(
+      (left, right) =>
+        right.products.length - left.products.length ||
+        left.name.localeCompare(right.name, "es"),
+    );
 }
 
 export async function getStoreBySlug(slug: string) {
@@ -271,7 +280,7 @@ export async function getStoreBySlug(slug: string) {
   const { data: products, error: productsError } = await supabase
     .from("products")
     .select(
-      "id, store_id, name, description, category, price, stock, fulfillment_mode, is_active, variant_options, variant_inventory, product_images(id, image_url, sort_order, alt_text)",
+      "id, store_id, name, description, category, price, stock, fulfillment_mode, is_active, variant_options, variant_inventory, product_images(id, image_url, thumbnail_url, sort_order, alt_text)",
     )
     .eq("store_id", store.id)
     .eq("is_active", true)

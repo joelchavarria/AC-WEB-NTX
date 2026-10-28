@@ -164,6 +164,7 @@ export function CartPageClient() {
                               alt={item.name}
                               fill
                               sizes="100px"
+                              unoptimized={item.image.includes("/thumbnails/")}
                             />
                           ) : (
                             <Package />

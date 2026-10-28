@@ -670,6 +670,7 @@ export function OrderGenerationClient({ contacts }: { contacts: Contacts }) {
                               alt={item.name}
                               fill
                               sizes="65px"
+                              unoptimized={item.image.includes("/thumbnails/")}
                             />
                           ) : (
                             <Package />

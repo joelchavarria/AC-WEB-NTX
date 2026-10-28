@@ -416,6 +416,7 @@ export function StorefrontClient({
                   alt={store.name}
                   fill
                   sizes="108px"
+                  unoptimized
                 />
               ) : (
                 <Storefront weight="duotone" />
@@ -583,10 +584,11 @@ export function StorefrontClient({
                      <div className="store-product-image">
                        {product.image ? (
                          <Image
-                           src={product.image}
+                           src={product.thumbnail ?? product.image}
                            alt={product.name}
                            fill
                            sizes="(max-width: 760px) 50vw, 25vw"
+                           unoptimized={Boolean(product.thumbnail)}
                          />
                        ) : (
                          <div className="product-image-fallback">
@@ -799,7 +801,7 @@ export function StorefrontClient({
                       onClick={() => setSelectedImageIndex(index)}
                       aria-label={`Ver foto ${index + 1}`}
                     >
-                      <Image src={image.image_url} alt="" fill sizes="76px" />
+                      <Image src={image.thumbnail_url ?? image.image_url} alt="" fill sizes="76px" unoptimized={Boolean(image.thumbnail_url)} />
                     </button>
                   ))}
                 </div>

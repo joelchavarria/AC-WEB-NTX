@@ -38,6 +38,10 @@ export function AddToCartButton({
   const variantAvailable =
     normalizeFulfillmentMode(product.fulfillment_mode) !== "inmediato" ||
     variantStock > 0;
+  const cartProduct = {
+    ...product,
+    image: product.thumbnail ?? product.image,
+  };
 
   useEffect(() => {
     const sync = () => setQuantity(readCart().find((item) => item.id === product.id && item.storeId === storeId && variantKey(item.variantOptions) === variantKey(variantOptions))?.quantity ?? 0);
@@ -48,7 +52,7 @@ export function AddToCartButton({
   if (quantity > 0) return <div className="product-quantity-control" aria-label={`Cantidad de ${product.name}`}>
     <button type="button" aria-label="Reducir cantidad" onClick={() => updateCartQuantity(product.id, storeId, quantity - 1, variantOptions)}><Minus weight="bold" /></button>
     <span><small>En carrito</small><strong>{quantity}</strong></span>
-    <button type="button" aria-label="Aumentar cantidad" disabled={normalizeFulfillmentMode(product.fulfillment_mode) === "inmediato" && quantity >= variantStock} onClick={() => addToCart({ ...product, storeId, storeName, storeSlug, variantOptions, quantity: 1 })}><Plus weight="bold" /></button>
+    <button type="button" aria-label="Aumentar cantidad" disabled={normalizeFulfillmentMode(product.fulfillment_mode) === "inmediato" && quantity >= variantStock} onClick={() => addToCart({ ...cartProduct, storeId, storeName, storeSlug, variantOptions, quantity: 1 })}><Plus weight="bold" /></button>
   </div>;
 
   return (
@@ -57,7 +61,7 @@ export function AddToCartButton({
       disabled={!availability.canAdd || !variantAvailable || disabled}
       aria-disabled={!availability.canAdd || !variantAvailable || disabled}
       onClick={() => {
-        addToCart({ ...product, storeId, storeName, storeSlug, variantOptions, quantity: 1 });
+        addToCart({ ...cartProduct, storeId, storeName, storeSlug, variantOptions, quantity: 1 });
       }}
       aria-live="polite"
     >

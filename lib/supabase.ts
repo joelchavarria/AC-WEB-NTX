@@ -82,6 +82,7 @@ export type Product = {
 export type ProductImage = {
   id?: string;
   image_url: string;
+  thumbnail_url?: string | null;
   sort_order?: number;
   alt_text?: string | null;
 };

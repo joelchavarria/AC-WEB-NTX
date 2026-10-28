@@ -12,6 +12,12 @@ const nextConfig = {
     ] }];
   },
   images: {
+    // Uploaded photos have immutable filenames. Keep transformed variants for
+    // at least 31 days and only create the sizes this storefront displays.
+    minimumCacheTTL: 2678400,
+    deviceSizes: [640, 960, 1280],
+    imageSizes: [32, 64, 96, 128, 256, 384],
+    qualities: [75],
     remotePatterns: [
       {
         protocol: "https",
