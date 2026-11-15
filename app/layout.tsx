@@ -2,7 +2,7 @@ import Link from "next/link";
 import { siteUrl } from "@/lib/seo";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { Analytics } from "@vercel/analytics/react";
+import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { NoticeCenterProvider } from "@/components/page/feedback/notice-center";
 import "./globals.css";
